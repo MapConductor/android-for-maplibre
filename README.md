@@ -7,6 +7,10 @@ You can use MapLibre  with Jetpack Compose, but you can also switch to other Map
 
 Even you use the wrapper API, but you can still access to the native MapLibre view if you want.
 
+## Setup
+
+https://docs-android.mapconductor.com/setup/maplibre/
+
 ## Usage
 
 ```kotlin
