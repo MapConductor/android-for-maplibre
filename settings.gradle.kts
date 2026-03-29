@@ -28,5 +28,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "mapconductor-for-maplibre"
+rootProject.name = "android-for-maplibre"
 include(":sample-app")

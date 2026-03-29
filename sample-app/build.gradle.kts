@@ -57,7 +57,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(findProject(":mapconductor-for-maplibre") ?: project(":"))
+    implementation(findProject(":android-for-maplibre") ?: project(":"))
     implementation(libs.maplibre.sdk)
     implementation(libs.maplibre.annotation)
 
