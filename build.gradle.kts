@@ -83,8 +83,8 @@ dependencies {
     // MapLibre SDK
     compileOnly(libs.maplibre.sdk)
     compileOnly(libs.maplibre.annotation)
-    compileOnly(project(":mapconductor-core"))
-    implementation(project(":mapconductor-heatmap"))
+    debugImplementation(project(":mapconductor-core"))
+    releaseImplementation("com.mapconductor:core:$libraryVersion")
 }
 
 // Publishing configuration
@@ -119,7 +119,7 @@ publishing {
                 description.set(libraryDescription)
                 url.set(
                     project.findProperty("libraryUrl") as String?
-                        ?: "https://github.com/MapConductor/android-sdk",
+                        ?: "https://github.com/MapConductor/android-for-maplibre",
                 )
 
                 licenses {
@@ -133,17 +133,17 @@ publishing {
                     developer {
                         id.set(project.findProperty("developerId") as String? ?: "mapconductor")
                         name.set(project.findProperty("developerName") as String? ?: "MapConductor Team")
-                        email.set(project.findProperty("developerEmail") as String? ?: "dev@mapconductor.com")
+                        email.set(project.findProperty("developerEmail") as String? ?: "info@mkgeeklab.com")
                     }
                 }
 
                 scm {
-                    connection.set("scm:git:git://github.com/MapConductor/android-sdk.git")
+                    connection.set("scm:git:git://github.com/MapConductor/android-for-maplibre.git")
                     developerConnection
-                        .set("scm:git:ssh://github.com:MapConductor/android-sdk.git")
+                        .set("scm:git:ssh://github.com:MapConductor/android-for-maplibre.git")
                     url.set(
                         project.findProperty("scmUrl") as String?
-                            ?: "https://github.com/MapConductor/android-sdk.git",
+                            ?: "https://github.com/MapConductor/android-for-maplibre.git",
                     )
                 }
             }
@@ -153,7 +153,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            setUrl("https://maven.pkg.github.com/MapConductor/android-sdk")
+            setUrl("https://maven.pkg.github.com/MapConductor/android-for-maplibre")
             credentials {
                 username =
                     project.findProperty("gpr.user") as String? ?: System.getenv("GPR_USER")
