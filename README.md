@@ -27,7 +27,7 @@ fun MapView(modifier: Modifier = Modifier) {
             cameraPosition =
                 MapCameraPosition(
                     position = center,
-                    zoom = 11.0,
+                    zoom = 2.0,
                 ),
         )
 
@@ -71,10 +71,10 @@ fun MapView(modifier: Modifier = Modifier) {
 fun MapExample() {
     val initCameraPosition = MapCameraPosition(
         position = GeoPoint(
-            latitude = 35.6762,
-            longitude = 139.6503
+            latitude = 34.091,
+            longitude = -117.886,
         ),
-        zoom = 17.0,
+        zoom = 9.0,
         tilt = 60.0,
         bearing = 30.0,
     )
@@ -98,7 +98,7 @@ fun MarkerExample() {
     val markerState = remember { MarkerState(
         position = GeoPoint(...),
         icon = DefaultMarkerIcon().copy(
-            label = "Tokyo",
+            label = "MapLibre",
         ),
         onClick = {
             it.animate(MarkerAnimation.Bounce)
