@@ -1,8 +1,8 @@
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("org.jlleitschuh.gradle.ktlint")
+    alias(libs.plugins.jlleitschuh.ktlint)
     id("maven-publish")
     id("signing")
 }
@@ -83,8 +83,11 @@ dependencies {
     // MapLibre SDK
     compileOnly(libs.maplibre.sdk)
     compileOnly(libs.maplibre.annotation)
-    debugImplementation(project(":mapconductor-core"))
-    releaseImplementation("com.mapconductor:core:$libraryVersion")
+    if (findProject(":mapconductor-core") != null) {
+        implementation(project(":mapconductor-core"))
+    } else {
+        implementation("com.mapconductor:core:$libraryVersion")
+    }
 }
 
 // Publishing configuration

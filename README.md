@@ -130,10 +130,12 @@ fun InfoBubbleExample() {
 
     MapLibreMapView(...) {
         Marker(markerState)
-        InfoBubble(
-            marker = it,
-        ) {
-            Text("Hello, world!")
+        selectedMarker?.let {
+            InfoBubble(
+                marker = it,
+            ) {
+                Text("Hello, world!")
+            }
         }
     }
 }
@@ -175,6 +177,8 @@ fun PolylineExample() {
     val polylineState = remember { PolylineState(
             points = airports,
             strokeColor = Color.Blue.copy(alpha = 0.5f),
+            strokeWidth = 4.dp,
+            geodesic = true,
         ) }
 
     MapLibreMapView(...) {
@@ -194,7 +198,7 @@ fun PolygonExample() {
 
     val polygonState = remember { PolygonState(
         points = goryokaku,
-        strokeColor = Color.Red.copy(alpha = 0.5f),
+        strokeColor = Color.Blue.copy(alpha = 0.5f),
         fillColor =  Color.Red.copy(alpha = 0.7f),
     ) }
 
