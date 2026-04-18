@@ -1,10 +1,9 @@
-Of course! Here is the high-quality SDK documentation for the provided Kotlin code snippet.
-
-***
-
 # Camera Position Conversion Utilities
 
-This document outlines a set of extension functions designed to facilitate seamless conversion between the application-specific `MapCameraPosition` and the MapLibre SDK's `CameraPosition`. These utilities are essential for maintaining a consistent camera state representation across different parts of the application and the underlying map library.
+This document outlines a set of extension functions designed to facilitate seamless conversion
+between the application-specific `MapCameraPosition` and the MapLibre SDK's `CameraPosition`. These
+utilities are essential for maintaining a consistent camera state representation across different
+parts of the application and the underlying map library.
 
 ---
 
@@ -18,14 +17,18 @@ fun MapCameraPosition.toCameraPosition(): CameraPosition
 ```
 
 **Description**
-This extension function translates the properties of a `MapCameraPosition` instance (such as `position`, `zoom`, `tilt`, and `bearing`) into a `CameraPosition` object that can be directly used by the MapLibre map controller. It handles the necessary conversions, including transforming the `GeoPoint` to a `LatLng` and adjusting the zoom level from a generic representation to the one expected by MapLibre.
+This extension function translates the properties of a `MapCameraPosition` instance (such as
+`position`, `zoom`, `tilt`, and `bearing`) into a `CameraPosition` object that can be directly used
+by the MapLibre map controller. It handles the necessary conversions, including transforming the
+`GeoPoint` to a `LatLng` and adjusting the zoom level from a generic representation to the one
+expected by MapLibre.
 
 **Note:** The `padding` property is not currently converted.
 
 **Returns**
-| Type | Description |
-|---|---|
-| `CameraPosition` | A new `CameraPosition` instance configured with the properties of the source `MapCameraPosition`. |
+- Type: `CameraPosition`
+    - Description: A new `CameraPosition` instance configured with the properties of the source
+  `MapCameraPosition`.
 
 **Example**
 ```kotlin
@@ -55,7 +58,8 @@ val maplibreCameraPosition = genericCameraPosition.toCameraPosition()
 
 ### `MapCameraPosition.Companion.from`
 
-A factory function to create a `MapCameraPosition` instance from any object implementing the `MapCameraPositionInterface`.
+A factory function to create a `MapCameraPosition` instance from any object implementing the
+`MapCameraPositionInterface`.
 
 **Signature**
 ```kotlin
@@ -63,17 +67,20 @@ fun MapCameraPosition.Companion.from(cameraPosition: MapCameraPositionInterface)
 ```
 
 **Description**
-This function acts as a safe and efficient constructor. It takes any object that conforms to the `MapCameraPositionInterface` and produces a concrete `MapCameraPosition` instance. If the provided object is already a `MapCameraPosition`, it is returned directly to avoid unnecessary object creation. Otherwise, a new `MapCameraPosition` is created by copying the properties from the interface.
+This function acts as a safe and efficient constructor. It takes any object that conforms to the
+`MapCameraPositionInterface` and produces a concrete `MapCameraPosition` instance. If the provided
+object is already a `MapCameraPosition`, it is returned directly to avoid unnecessary object
+creation. Otherwise, a new `MapCameraPosition` is created by copying the properties from the
+interface.
 
 **Parameters**
-| Parameter | Type | Description |
-|---|---|---|
-| `cameraPosition` | `MapCameraPositionInterface` | The camera position object to convert into a concrete `MapCameraPosition`. |
+- `cameraPosition`
+    - Type: `MapCameraPositionInterface`
+    - Description: The camera position object to convert into a concrete `MapCameraPosition`.
 
 **Returns**
-| Type | Description |
-|---|---|
-| `MapCameraPosition` | A concrete `MapCameraPosition` instance. |
+- Type: `MapCameraPosition`
+    - Description: A concrete `MapCameraPosition` instance.
 
 **Example**
 ```kotlin
@@ -118,18 +125,21 @@ fun CameraPosition.toMapCameraPosition(): MapCameraPosition
 ```
 
 **Description**
-This extension function performs the reverse operation of `toCameraPosition`. It takes a MapLibre `CameraPosition` and converts it into the application's generic `MapCameraPosition` representation. It safely handles potentially null properties from the MapLibre object by providing default values:
+This extension function performs the reverse operation of `toCameraPosition`. It takes a MapLibre
+`CameraPosition` and converts it into the application's generic `MapCameraPosition` representation.
+It safely handles potentially null properties from the MapLibre object by providing default values:
 - `target`: Defaults to `GeoPoint(0.0, 0.0)` if null.
 - `bearing`: Defaults to `0.0` if null.
 - `tilt`: Defaults to `0.0` if null.
 - `visibleRegion`: Is always set to `null`.
 
-The function also converts the MapLibre-specific zoom level back to the application's generic zoom representation.
+The function also converts the MapLibre-specific zoom level back to the application's generic zoom
+representation.
 
 **Returns**
-| Type | Description |
-|---|---|
-| `MapCameraPosition` | A new `MapCameraPosition` instance populated with data from the MapLibre `CameraPosition`. |
+- Type: `MapCameraPosition`
+    - Description: A new `MapCameraPosition` instance populated with data from the MapLibre
+  `CameraPosition`.
 
 **Example**
 ```kotlin
@@ -149,6 +159,6 @@ val maplibreCameraPosition = CameraPosition.Builder()
 val genericCameraPosition = maplibreCameraPosition.toMapCameraPosition()
 
 // 'genericCameraPosition' can now be used within the application's core logic
-println(genericCameraPosition.position) 
+println(genericCameraPosition.position)
 // Outputs a GeoPoint representation of Tokyo's coordinates
 ```

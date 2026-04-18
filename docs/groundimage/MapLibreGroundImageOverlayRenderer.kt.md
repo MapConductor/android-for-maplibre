@@ -1,8 +1,13 @@
 # MapLibreGroundImageOverlayRenderer
 
-The `MapLibreGroundImageOverlayRenderer` class is responsible for rendering and managing ground image overlays on a MapLibre map. It implements the `AbstractGroundImageOverlayRenderer` and handles the complete lifecycle of a ground image, including its creation, updates to its properties, and its removal.
+The `MapLibreGroundImageOverlayRenderer` class is responsible for rendering and managing ground
+image overlays on a MapLibre map. It implements the `AbstractGroundImageOverlayRenderer` and handles
+the complete lifecycle of a ground image, including its creation, updates to its properties, and its
+removal.
 
-This renderer operates by generating image tiles from a source image and its geographical bounds. It uses a `LocalTileServer` to serve these tiles to the MapLibre map, which then displays them as a `RasterLayer`.
+This renderer operates by generating image tiles from a source image and its geographical bounds. It
+uses a `LocalTileServer` to serve these tiles to the MapLibre map, which then displays them as a
+`RasterLayer`.
 
 ## Signature
 
@@ -20,11 +25,16 @@ Initializes a new instance of `MapLibreGroundImageOverlayRenderer`.
 
 ### Parameters
 
-| Parameter   | Type                           | Description                                                                                             |
-| :---------- | :----------------------------- | :------------------------------------------------------------------------------------------------------ |
-| `holder`    | `MapLibreMapViewHolderInterface` | The view holder that provides access to the MapLibre map instance and its style.                        |
-| `tileServer`| `LocalTileServer`              | A local server instance used to serve the generated image tiles to the map.                             |
-| `coroutine` | `CoroutineScope`               | The coroutine scope for running asynchronous operations. Defaults to `CoroutineScope(Dispatchers.Main)`. |
+- `holder`
+    - Type: `MapLibreMapViewHolderInterface`
+    - Description: The view holder that provides access to the MapLibre map instance and its style.
+- `tileServer`
+    - Type: `LocalTileServer`
+    - Description: A local server instance used to serve the generated image tiles to the map.
+- `coroutine`
+    - Type: `CoroutineScope`
+    - Description: The coroutine scope for running asynchronous operations. Defaults to
+                   `CoroutineScope(Dispatchers.Main)`.
 
 ---
 
@@ -32,7 +42,9 @@ Initializes a new instance of `MapLibreGroundImageOverlayRenderer`.
 
 ### createGroundImage
 
-Asynchronously creates a new ground image overlay on the map based on the provided state. It sets up a tile provider, registers it with the `LocalTileServer`, and adds the necessary `RasterSource` and `RasterLayer` to the map style.
+Asynchronously creates a new ground image overlay on the map based on the provided state. It sets up
+a tile provider, registers it with the `LocalTileServer`, and adds the necessary `RasterSource` and
+`RasterLayer` to the map style.
 
 #### Signature
 
@@ -42,21 +54,27 @@ override suspend fun createGroundImage(state: GroundImageState): MapLibreActualG
 
 #### Parameters
 
-| Parameter | Type             | Description                                                                                             |
-| :-------- | :--------------- | :------------------------------------------------------------------------------------------------------ |
-| `state`   | `GroundImageState` | An object containing the configuration for the ground image, such as the image, geographical bounds, and tile size. |
+- `state`
+    - Type: `GroundImageState`
+    - Description: An object containing the configuration for the ground image, such as the image,
+                   geographical bounds, and tile size.
 
 #### Returns
 
-| Type                        | Description                                                                                                                            |
-| :-------------------------- | :------------------------------------------------------------------------------------------------------------------------------------- |
-| `MapLibreActualGroundImage?`| A handle to the created ground image (`MapLibreActualGroundImage`) if successful, or `null` if the map style is not available or creation fails. This handle is used for subsequent updates and removal. |
+- Type: `MapLibreActualGroundImage?`
+    - Description: A handle to the created ground image (`MapLibreActualGroundImage`) if successful,
+                   or
+  `null` if the map style is not available or creation fails. This handle is used for subsequent
+  updates and removal.
 
 ---
 
 ### updateGroundImageProperties
 
-Asynchronously updates an existing ground image overlay. It efficiently checks for changes in properties like opacity, bounds, or the image itself. If the tile content needs to be regenerated (e.g., bounds or image changed), it creates a new source and layer. If only opacity changes, it updates the existing layer's properties.
+Asynchronously updates an existing ground image overlay. It efficiently checks for changes in
+properties like opacity, bounds, or the image itself. If the tile content needs to be regenerated
+(e.g., bounds or image changed), it creates a new source and layer. If only opacity changes, it
+updates the existing layer's properties.
 
 #### Signature
 
@@ -70,23 +88,29 @@ override suspend fun updateGroundImageProperties(
 
 #### Parameters
 
-| Parameter     | Type                                                  | Description                                                                    |
-| :------------ | :---------------------------------------------------- | :----------------------------------------------------------------------------- |
-| `groundImage` | `MapLibreActualGroundImage`                           | The handle of the ground image to update, returned from `createGroundImage`.   |
-| `current`     | `GroundImageEntityInterface<MapLibreActualGroundImage>` | The entity representing the new state of the ground image.                     |
-| `prev`        | `GroundImageEntityInterface<MapLibreActualGroundImage>` | The entity representing the previous state of the ground image, used for diffing. |
+- `groundImage`
+    - Type: `MapLibreActualGroundImage`
+    - Description: The handle of the ground image to update, returned from `createGroundImage`.
+- `current`
+    - Type: `GroundImageEntityInterface<MapLibreActualGroundImage>`
+    - Description: The entity representing the new state of the ground image.
+- `prev`
+    - Type: `GroundImageEntityInterface<MapLibreActualGroundImage>`
+    - Description: The entity representing the previous state of the ground image, used for diffing.
 
 #### Returns
 
-| Type                        | Description                                                                                                                                                                                                                         |
-| :-------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MapLibreActualGroundImage?`| A new handle to the updated ground image if changes required recreating the source/layer. Returns the original handle if only properties were updated, or `null` on failure (e.g., map style not available). |
+- Type: `MapLibreActualGroundImage?`
+    - Description: A new handle to the updated ground image if changes required recreating the
+  source/layer. Returns the original handle if only properties were updated, or `null` on failure
+  (e.g., map style not available).
 
 ---
 
 ### removeGroundImage
 
-Asynchronously removes a ground image overlay from the map. It removes the associated `RasterLayer` and `RasterSource` from the map style and unregisters the tile provider from the `LocalTileServer`.
+Asynchronously removes a ground image overlay from the map. It removes the associated `RasterLayer`
+and `RasterSource` from the map style and unregisters the tile provider from the `LocalTileServer`.
 
 #### Signature
 
@@ -96,9 +120,9 @@ override suspend fun removeGroundImage(entity: GroundImageEntityInterface<MapLib
 
 #### Parameters
 
-| Parameter | Type                                                  | Description                                                              |
-| :-------- | :---------------------------------------------------- | :----------------------------------------------------------------------- |
-| `entity`  | `GroundImageEntityInterface<MapLibreActualGroundImage>` | The entity whose associated ground image overlay should be removed from the map. |
+- `entity`
+    - Type: `GroundImageEntityInterface<MapLibreActualGroundImage>`
+    - Description: The entity whose associated ground image overlay should be removed from the map.
 
 #### Returns
 
@@ -108,7 +132,8 @@ This function does not return a value.
 
 ## Example
 
-The following example demonstrates the basic lifecycle of managing a ground image overlay using `MapLibreGroundImageOverlayRenderer`.
+The following example demonstrates the basic lifecycle of managing a ground image overlay using
+`MapLibreGroundImageOverlayRenderer`.
 
 ```kotlin
 import kotlinx.coroutines.launch

@@ -1,10 +1,11 @@
-Of course! Here is the high-quality SDK documentation for the provided Kotlin code snippet.
-
 # MapLibre Interoperability Extensions
 
-This document provides a reference for a set of Kotlin extension functions designed to facilitate seamless conversion between the `com.mapconductor.core.features.GeoPoint` class and MapLibre's native geometry types, `org.maplibre.android.geometry.LatLng` and `org.maplibre.geojson.Point`.
+This document provides a reference for a set of Kotlin extension functions designed to facilitate
+seamless conversion between the `com.mapconductor.core.features.GeoPoint` class and MapLibre's
+native geometry types, `org.maplibre.android.geometry.LatLng` and `org.maplibre.geojson.Point`.
 
-These utilities simplify the process of passing location data between your application's core logic and the MapLibre SDK.
+These utilities simplify the process of passing location data between your application's core logic
+and the MapLibre SDK.
 
 ---
 
@@ -18,12 +19,12 @@ fun GeoPoint.toLatLng(): LatLng
 ```
 
 ### Description
-This extension function creates a new `LatLng` instance using the `latitude`, `longitude`, and `altitude` values from the source `GeoPoint` object.
+This extension function creates a new `LatLng` instance using the `latitude`, `longitude`, and
+`altitude` values from the source `GeoPoint` object.
 
 ### Returns
-| Type | Description |
-|---|---|
-| `LatLng` | A new MapLibre `LatLng` object with the same coordinate values. |
+- Type: `LatLng`
+    - Description: A new MapLibre `LatLng` object with the same coordinate values.
 
 ### Example
 ```kotlin
@@ -48,17 +49,17 @@ fun GeoPoint.Companion.from(latLng: LatLng): GeoPoint
 ```
 
 ### Description
-This companion object function constructs a `GeoPoint` using the coordinate data from the provided `LatLng` object.
+This companion object function constructs a `GeoPoint` using the coordinate data from the provided
+`LatLng` object.
 
 ### Parameters
-| Parameter | Type | Description |
-|---|---|---|
-| `latLng` | `LatLng` | The MapLibre `LatLng` object to convert. |
+- `latLng`
+    - Type: `LatLng`
+    - Description: The MapLibre `LatLng` object to convert.
 
 ### Returns
-| Type | Description |
-|---|---|
-| `GeoPoint` | A new `GeoPoint` instance with values from the `latLng` object. |
+- Type: `GeoPoint`
+    - Description: A new `GeoPoint` instance with values from the `latLng` object.
 
 ### Example
 ```kotlin
@@ -84,12 +85,12 @@ fun LatLng.toGeoPoint(): GeoPoint
 ```
 
 ### Description
-This extension function creates a new `GeoPoint` instance using the `latitude`, `longitude`, and `altitude` values from the source `LatLng` object.
+This extension function creates a new `GeoPoint` instance using the `latitude`, `longitude`, and
+`altitude` values from the source `LatLng` object.
 
 ### Returns
-| Type | Description |
-|---|---|
-| `GeoPoint` | A new `GeoPoint` object with the same coordinate values. |
+- Type: `GeoPoint`
+    - Description: A new `GeoPoint` object with the same coordinate values.
 
 ### Example
 ```kotlin
@@ -114,12 +115,13 @@ fun GeoPoint.toPoint(): Point
 ```
 
 ### Description
-This extension function creates a new GeoJSON `Point` instance from a `GeoPoint`. It correctly handles the `(longitude, latitude)` order required by the GeoJSON specification and the `Point.fromLngLat` factory method.
+This extension function creates a new GeoJSON `Point` instance from a `GeoPoint`. It correctly
+handles the `(longitude, latitude)` order required by the GeoJSON specification and the
+`Point.fromLngLat` factory method.
 
 ### Returns
-| Type | Description |
-|---|---|
-| `Point` | A new MapLibre GeoJSON `Point` object representing the `GeoPoint`. |
+- Type: `Point`
+    - Description: A new MapLibre GeoJSON `Point` object representing the `GeoPoint`.
 
 ### Example
 ```kotlin
@@ -144,17 +146,17 @@ fun GeoPoint.Companion.from(point: Point): GeoPoint
 ```
 
 ### Description
-This companion object function constructs a `GeoPoint` using the coordinate data from the provided GeoJSON `Point` object. It correctly extracts latitude, longitude, and altitude.
+This companion object function constructs a `GeoPoint` using the coordinate data from the provided
+GeoJSON `Point` object. It correctly extracts latitude, longitude, and altitude.
 
 ### Parameters
-| Parameter | Type | Description |
-|---|---|---|
-| `point` | `Point` | The MapLibre GeoJSON `Point` object to convert. |
+- `point`
+    - Type: `Point`
+    - Description: The MapLibre GeoJSON `Point` object to convert.
 
 ### Returns
-| Type | Description |
-|---|---|
-| `GeoPoint` | A new `GeoPoint` instance with values from the `point` object. |
+- Type: `GeoPoint`
+    - Description: A new `GeoPoint` instance with values from the `point` object.
 
 ### Example
 ```kotlin

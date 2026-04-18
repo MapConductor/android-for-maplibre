@@ -1,8 +1,11 @@
 # MapLibreGroundImageHandle
 
-A data class that encapsulates all the necessary information and resources for managing a ground image layer on a MapLibre map.
+A data class that encapsulates all the necessary information and resources for managing a ground
+image layer on a MapLibre map.
 
-This handle acts as a container for identifiers, caching keys, and the data provider required to display and manage the lifecycle of a ground image. It is typically returned when a ground image is added to the map and can be used later to reference or remove it.
+This handle acts as a container for identifiers, caching keys, and the data provider required to
+display and manage the lifecycle of a ground image. It is typically returned when a ground image is
+added to the map and can be used later to reference or remove it.
 
 ## Signature
 
@@ -19,14 +22,27 @@ data class MapLibreGroundImageHandle(
 
 ## Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `routeId` | `String` | A unique identifier for the route or entity associated with the ground image. |
-| `generation` | `Long` | A version number for the ground image data, often used for cache invalidation and tracking updates. |
-| `cacheKey` | `String` | A unique key used for caching the ground image tiles. |
-| `sourceId` | `String` | The ID of the MapLibre `Source` that provides the data for the ground image layer. |
-| `layerId` | `String` | The ID of the MapLibre `Layer` that renders the ground image on the map. |
-| `tileProvider` | `GroundImageTileProvider` | The provider instance responsible for fetching and supplying the ground image tiles. |
+- `routeId`
+    - Type: `String`
+    - Description: A unique identifier for the route or entity associated with the ground image.
+- `generation`
+    - Type: `Long`
+    - Description: A version number for the ground image data, often used for cache invalidation and
+                   tracking updates.
+- `cacheKey`
+    - Type: `String`
+    - Description: A unique key used for caching the ground image tiles.
+- `sourceId`
+    - Type: `String`
+    - Description: The ID of the MapLibre `Source` that provides the data for the ground image
+                   layer.
+- `layerId`
+    - Type: `String`
+    - Description: The ID of the MapLibre `Layer` that renders the ground image on the map.
+- `tileProvider`
+    - Type: `GroundImageTileProvider`
+    - Description: The provider instance responsible for fetching and supplying the ground image
+                   tiles.
 
 ## Example
 

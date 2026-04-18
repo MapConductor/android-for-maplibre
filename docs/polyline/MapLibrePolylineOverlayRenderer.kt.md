@@ -1,7 +1,3 @@
-Of course! Here is the high-quality SDK documentation for the provided code snippet.
-
----
-
 # MapLibrePolylineOverlayRenderer
 
 ## Signature
@@ -17,9 +13,13 @@ class MapLibrePolylineOverlayRenderer(
 
 ## Description
 
-The `MapLibrePolylineOverlayRenderer` is a concrete implementation of `AbstractPolylineOverlayRenderer` designed specifically for the MapLibre map framework. It acts as the bridge between the abstract polyline data model and the visual representation on a MapLibre map.
+The `MapLibrePolylineOverlayRenderer` is a concrete implementation of
+`AbstractPolylineOverlayRenderer` designed specifically for the MapLibre map framework. It acts as
+the bridge between the abstract polyline data model and the visual representation on a MapLibre map.
 
-This class is responsible for the entire lifecycle of polyline overlays, including their creation, property updates, and removal. It collaborates with a `MapLibrePolylineLayer` to efficiently draw and manage polylines as features on the map style.
+This class is responsible for the entire lifecycle of polyline overlays, including their creation,
+property updates, and removal. It collaborates with a `MapLibrePolylineLayer` to efficiently draw
+and manage polylines as features on the map style.
 
 Key behaviors include:
 - Translating abstract `PolylineState` into tangible `MapLibreActualPolyline` objects.
@@ -30,12 +30,21 @@ Key behaviors include:
 
 This class is instantiated with the following parameters:
 
-| Parameter         | Type                                                 | Description                                                                                             |
-| ----------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `layer`           | `MapLibrePolylineLayer`                              | The layer responsible for drawing the polyline features onto the MapLibre map style.                    |
-| `polylineManager` | `PolylineManagerInterface<MapLibreActualPolyline>`   | The manager that holds the state and collection of all polyline entities.                               |
-| `holder`          | `MapLibreMapViewHolderInterface`                     | The view holder interface that provides access to the MapLibre map instance and its controller.         |
-| `coroutine`       | `CoroutineScope`                                     | The coroutine scope used for launching asynchronous drawing operations. Defaults to `Dispatchers.Main`. |
+- `layer`
+    - Type: `MapLibrePolylineLayer`
+    - Description: The layer responsible for drawing the polyline features onto the MapLibre map
+                   style.
+- `polylineManager`
+    - Type: `PolylineManagerInterface<MapLibreActualPolyline>`
+    - Description: The manager that holds the state and collection of all polyline entities.
+- `holder`
+    - Type: `MapLibreMapViewHolderInterface`
+    - Description: The view holder interface that provides access to the MapLibre map instance and
+                   its controller.
+- `coroutine`
+    - Type: `CoroutineScope`
+    - Description: The coroutine scope used for launching asynchronous drawing operations. Defaults
+                   to `Dispatchers.Main`.
 
 ---
 
@@ -49,17 +58,19 @@ override suspend fun createPolyline(state: PolylineState): MapLibreActualPolylin
 ```
 
 **Description**
-Creates a new `MapLibreActualPolyline` from a given `PolylineState`. This method translates the abstract state (points, color, width, etc.) into a concrete polyline feature that can be rendered on the map. The `zIndex` is resolved from the state's `zIndex` property or an optional `extra` integer property.
+Creates a new `MapLibreActualPolyline` from a given `PolylineState`. This method translates the
+abstract state (points, color, width, etc.) into a concrete polyline feature that can be rendered on
+the map. The `zIndex` is resolved from the state's `zIndex` property or an optional `extra` integer
+property.
 
 **Parameters**
-| Parameter | Type            | Description                                        |
-| --------- | --------------- | -------------------------------------------------- |
-| `state`   | `PolylineState` | The data object containing the properties for the new polyline. |
+- `state`
+    - Type: `PolylineState`
+    - Description: The data object containing the properties for the new polyline.
 
 **Returns**
-| Type                       | Description                                                              |
-| -------------------------- | ------------------------------------------------------------------------ |
-| `MapLibreActualPolyline?`  | The newly created polyline object, or `null` if creation was unsuccessful. |
+- Type: `MapLibreActualPolyline?`
+    - Description: The newly created polyline object, or `null` if creation was unsuccessful.
 
 ---
 
@@ -75,19 +86,23 @@ override suspend fun updatePolylineProperties(
 ```
 
 **Description**
-Updates an existing polyline's properties. This implementation handles updates by completely recreating the polyline feature with the new properties defined in the `current` state.
+Updates an existing polyline's properties. This implementation handles updates by completely
+recreating the polyline feature with the new properties defined in the `current` state.
 
 **Parameters**
-| Parameter  | Type                                                 | Description                                                              |
-| ---------- | ---------------------------------------------------- | ------------------------------------------------------------------------ |
-| `polyline` | `MapLibreActualPolyline`                             | The actual polyline object on the map that needs to be updated.          |
-| `current`  | `PolylineEntityInterface<MapLibreActualPolyline>`    | The entity containing the new, updated state for the polyline.           |
-| `prev`     | `PolylineEntityInterface<MapLibreActualPolyline>`    | The entity containing the previous state of the polyline before the update. |
+- `polyline`
+    - Type: `MapLibreActualPolyline`
+    - Description: The actual polyline object on the map that needs to be updated.
+- `current`
+    - Type: `PolylineEntityInterface<MapLibreActualPolyline>`
+    - Description: The entity containing the new, updated state for the polyline.
+- `prev`
+    - Type: `PolylineEntityInterface<MapLibreActualPolyline>`
+    - Description: The entity containing the previous state of the polyline before the update.
 
 **Returns**
-| Type                       | Description                                                              |
-| -------------------------- | ------------------------------------------------------------------------ |
-| `MapLibreActualPolyline?`  | The new polyline object that replaces the old one, or `null` on failure. |
+- Type: `MapLibreActualPolyline?`
+    - Description: The new polyline object that replaces the old one, or `null` on failure.
 
 ---
 
@@ -99,12 +114,14 @@ override suspend fun removePolyline(entity: PolylineEntityInterface<MapLibreActu
 ```
 
 **Description**
-Marks a polyline for removal. Note that this method does not immediately remove the polyline from the map. Instead, the actual removal occurs during the `onPostProcess` step, where all remaining polylines are redrawn, effectively excluding the one marked for removal.
+Marks a polyline for removal. Note that this method does not immediately remove the polyline from
+the map. Instead, the actual removal occurs during the `onPostProcess` step, where all remaining
+polylines are redrawn, effectively excluding the one marked for removal.
 
 **Parameters**
-| Parameter | Type                                              | Description                               |
-| --------- | ------------------------------------------------- | ----------------------------------------- |
-| `entity`  | `PolylineEntityInterface<MapLibreActualPolyline>` | The polyline entity to be removed.        |
+- `entity`
+    - Type: `PolylineEntityInterface<MapLibreActualPolyline>`
+    - Description: The polyline entity to be removed.
 
 ---
 
@@ -116,7 +133,10 @@ override suspend fun onPostProcess()
 ```
 
 **Description**
-This method is called after a batch of create, update, or remove operations. It synchronizes the visual state of the map with the current data model by fetching all active polyline entities from the `polylineManager` and instructing the `MapLibrePolylineLayer` to draw them. This is the step where removals are finalized and all changes become visible.
+This method is called after a batch of create, update, or remove operations. It synchronizes the
+visual state of the map with the current data model by fetching all active polyline entities from
+the `polylineManager` and instructing the `MapLibrePolylineLayer` to draw them. This is the step
+where removals are finalized and all changes become visible.
 
 ---
 
@@ -128,7 +148,9 @@ fun redraw()
 ```
 
 **Description**
-Manually triggers a full redraw of all polylines managed by the associated `polylineManager`. This is a utility function that can be called to force a refresh of the polyline layer at any time, ensuring the map's visual state is perfectly synchronized with the data.
+Manually triggers a full redraw of all polylines managed by the associated `polylineManager`. This
+is a utility function that can be called to force a refresh of the polyline layer at any time,
+ensuring the map's visual state is perfectly synchronized with the data.
 
 ---
 

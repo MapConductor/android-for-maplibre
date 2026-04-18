@@ -1,7 +1,3 @@
-Of course! Here is the high-quality SDK documentation for the provided Kotlin code snippet.
-
-***
-
 # MapLibrePolylineLayer
 
 ## `MapLibrePolylineLayer` Class
@@ -17,9 +13,12 @@ class MapLibrePolylineLayer(
 
 ### Description
 
-The `MapLibrePolylineLayer` class is a controller responsible for managing and rendering a collection of polylines on a MapLibre map. It encapsulates a MapLibre `GeoJsonSource` and a corresponding `LineLayer`, simplifying the process of adding, updating, and styling polylines.
+The `MapLibrePolylineLayer` class is a controller responsible for managing and rendering a
+collection of polylines on a MapLibre map. It encapsulates a MapLibre `GeoJsonSource` and a
+corresponding `LineLayer`, simplifying the process of adding, updating, and styling polylines.
 
-This class links the visual properties of the polylines (like color and width) to the properties of the underlying GeoJSON features, allowing for dynamic styling on a per-polyline basis.
+This class links the visual properties of the polylines (like color and width) to the properties of
+the underlying GeoJSON features, allowing for dynamic styling on a per-polyline basis.
 
 ### Constructor
 
@@ -33,10 +32,13 @@ MapLibrePolylineLayer(sourceId: String, layerId: String)
 
 #### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `sourceId` | `String` | A unique identifier for the `GeoJsonSource` that will store the polyline data. |
-| `layerId` | `String` | A unique identifier for the `LineLayer` that will render the polylines from the source. |
+- `sourceId`
+    - Type: `String`
+    - Description: A unique identifier for the `GeoJsonSource` that will store the polyline data.
+- `layerId`
+    - Type: `String`
+    - Description: A unique identifier for the `LineLayer` that will render the polylines from the
+                   source.
 
 ---
 
@@ -44,7 +46,8 @@ MapLibrePolylineLayer(sourceId: String, layerId: String)
 
 ### `source`
 
-The underlying MapLibre `GeoJsonSource` that holds the polyline data as a `FeatureCollection`. This source is initialized with an empty collection and is updated when the `draw()` method is called.
+The underlying MapLibre `GeoJsonSource` that holds the polyline data as a `FeatureCollection`. This
+source is initialized with an empty collection and is updated when the `draw()` method is called.
 
 #### Signature
 
@@ -54,7 +57,8 @@ val source: GeoJsonSource
 
 ### `layer`
 
-The MapLibre `LineLayer` used to render the polylines. It is pre-configured to use the `source` and to style the lines based on properties within each GeoJSON feature.
+The MapLibre `LineLayer` used to render the polylines. It is pre-configured to use the `source` and
+to style the lines based on properties within each GeoJSON feature.
 
 #### Signature
 
@@ -74,7 +78,8 @@ The layer is configured with the following default properties:
 
 ## `Prop` Object
 
-A static object containing constants for property names. These keys should be added to the properties of each GeoJSON `Feature` to control its styling.
+A static object containing constants for property names. These keys should be added to the
+properties of each GeoJSON `Feature` to control its styling.
 
 ### Signature
 
@@ -84,11 +89,19 @@ object Prop
 
 ### Properties
 
-| Property | Type | Value | Description |
-| :--- | :--- | :--- | :--- |
-| `STROKE_COLOR` | `String` | `"strokeColor"` | The key for the feature property that defines the polyline's stroke color (e.g., `"#FF0000"`). |
-| `STROKE_WIDTH` | `String` | `"strokeWidth"` | The key for the feature property that defines the polyline's stroke width in pixels (e.g., `5.0f`). |
-| `Z_INDEX` | `String` | `"zIndex"` | The key for the feature property that can be used to define the polyline's z-index. **Note**: This property is not used by the `layer`'s default configuration in this class but is provided for potential custom extensions. |
+- `STROKE_COLOR`
+    - Type: `String`
+    - Description: The key for the feature property that defines the polyline's stroke color (e.g.,
+                   `"#FF0000"`).
+- `STROKE_WIDTH`
+    - Type: `String`
+    - Description: The key for the feature property that defines the polyline's stroke width in
+                   pixels (e.g., `5.0f`).
+- `Z_INDEX`
+    - Type: `String`
+    - Description: The key for the feature property that can be used to define the polyline's
+                   z-index. **Note**: This property is not used by the `layer`'s default
+                   configuration in this class but is provided for potential custom extensions.
 
 ---
 
@@ -96,9 +109,12 @@ object Prop
 
 ### `draw`
 
-Renders or updates the polylines on the map. This method processes a list of polyline entities, converts them into a `FeatureCollection`, and updates the `GeoJsonSource`.
+Renders or updates the polylines on the map. This method processes a list of polyline entities,
+converts them into a `FeatureCollection`, and updates the `GeoJsonSource`.
 
-It first attempts to get the source directly from the map's active `Style` for optimal performance. If the style is in transition or otherwise unavailable, it gracefully falls back to updating its local `source` instance.
+It first attempts to get the source directly from the map's active `Style` for optimal performance.
+If the style is in transition or otherwise unavailable, it gracefully falls back to updating its
+local `source` instance.
 
 #### Signature
 
@@ -111,10 +127,13 @@ fun draw(
 
 #### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `entities` | `List<PolylineEntityInterface<MapLibreActualPolyline>>` | A list of polyline entities to be drawn. Each entity contains the geometric data and properties for one or more polylines. |
-| `style` | `org.maplibre.android.maps.Style` | The current, fully loaded `Style` object from the MapLibre map instance. |
+- `entities`
+    - Type: `List<PolylineEntityInterface<MapLibreActualPolyline>>`
+    - Description: A list of polyline entities to be drawn. Each entity contains the geometric data
+                   and properties for one or more polylines.
+- `style`
+    - Type: `org.maplibre.android.maps.Style`
+    - Description: The current, fully loaded `Style` object from the MapLibre map instance.
 
 #### Returns
 
@@ -124,7 +143,8 @@ fun draw(
 
 ## Example
 
-The following example demonstrates how to initialize `MapLibrePolylineLayer`, add its source and layer to the map, and use the `draw()` method to render polylines.
+The following example demonstrates how to initialize `MapLibrePolylineLayer`, add its source and
+layer to the map, and use the `draw()` method to render polylines.
 
 ```kotlin
 import com.mapbox.geojson.LineString

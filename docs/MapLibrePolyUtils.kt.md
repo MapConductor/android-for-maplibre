@@ -1,20 +1,21 @@
-Excellent! Here is the high-quality SDK documentation for the provided Kotlin code snippets.
+This document provides detailed information about utility functions used to create
+MapLibre-compatible `Feature` objects for polylines and polygons from a list of geographical points.
 
-***
+## A Note on Visibility
 
-This document provides detailed information about utility functions used to create MapLibre-compatible `Feature` objects for polylines and polygons from a list of geographical points.
-
-### A Note on Visibility
-
-The functions `createMapLibreLines` and `createMapLibrePolygons` are marked as `internal`. This means they are designed for use within the `com.mapconductor.maplibre` module and are not part of the public-facing API.
+The functions `createMapLibreLines` and `createMapLibrePolygons` are marked as `internal`. This
+means they are designed for use within the `com.mapconductor.maplibre` module and are not part of
+the public-facing API.
 
 ---
 
-## `createMapLibreLines`
+# `createMapLibreLines`
 
-This internal function constructs a list of MapLibre `Feature` objects that represent one or more polylines. It intelligently handles interpolation and splits the line if it crosses the antimeridian to ensure correct rendering on the map.
+This internal function constructs a list of MapLibre `Feature` objects that represent one or more
+polylines. It intelligently handles interpolation and splits the line if it crosses the antimeridian
+to ensure correct rendering on the map.
 
-### Signature
+## Signature
 
 ```kotlin
 internal fun createMapLibreLines(
@@ -27,33 +28,51 @@ internal fun createMapLibreLines(
 ): List<Feature>
 ```
 
-### Description
+## Description
 
-The `createMapLibreLines` function takes a list of geographic points and generates the corresponding MapLibre `LineString` features.
+The `createMapLibreLines` function takes a list of geographic points and generates the corresponding
+MapLibre `LineString` features.
 
 Key features include:
-*   **Interpolation**: It can create either geodesic (great circle) paths or simple linear paths based on the `geodesic` flag.
-*   **Antimeridian Splitting**: To prevent rendering artifacts, it automatically splits a line that crosses the 180° meridian into multiple `Feature` objects.
-*   **Styling**: It attaches properties for styling, such as stroke color and width, directly to the generated features.
+*   **Interpolation**: It can create either geodesic (great circle) paths or simple linear paths
+    based on the `geodesic` flag.
+*   **Antimeridian Splitting**: To prevent rendering artifacts, it automatically splits a line that
+    crosses the 180° meridian into multiple `Feature` objects.
+*   **Styling**: It attaches properties for styling, such as stroke color and width, directly to the
+    generated features.
 
-### Parameters
+## Parameters
 
-| Name          | Type                    | Description                                                                                                                            |
-|---------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
-| `id`          | `String`                | A unique base identifier for the polyline. An index will be appended to this ID for each feature created (e.g., `polyline-myline-0`).     |
-| `points`      | `List<GeoPointInterface>` | A list of `GeoPointInterface` objects that define the vertices of the polyline.                                                        |
-| `geodesic`    | `Boolean`               | If `true`, the line follows a great circle path. If `false`, it's a straight line on the Mercator projection.                           |
-| `strokeColor` | `Color`                 | The color of the polyline stroke, provided as a `androidx.compose.ui.graphics.Color`.                                                  |
-| `strokeWidth` | `Dp`                    | The width of the polyline stroke, specified in `Dp` (density-independent pixels).                                                      |
-| `zIndex`      | `Int`                   | The drawing order of the line. Higher values are drawn on top. Defaults to `0`.                                                        |
+- `id`
+    - Type: `String`
+    - Description: A unique base identifier for the polyline. An index will be appended to this ID
+                   for each feature created (e.g., `polyline-myline-0`).
+- `points`
+    - Type: `List<GeoPointInterface>`
+    - Description: A list of `GeoPointInterface` objects that define the vertices of the polyline.
+- `geodesic`
+    - Type: `Boolean`
+    - Description: If `true`, the line follows a great circle path. If `false`, it's a straight line
+                   on the Mercator projection.
+- `strokeColor`
+    - Type: `Color`
+    - Description: The color of the polyline stroke, provided as a
+                   `androidx.compose.ui.graphics.Color`.
+- `strokeWidth`
+    - Type: `Dp`
+    - Description: The width of the polyline stroke, specified in `Dp` (density-independent pixels).
+- `zIndex`
+    - Type: `Int`
+    - Description: The drawing order of the line. Higher values are drawn on top. Defaults to `0`.
 
-### Returns
+## Returns
 
 **`List<Feature>`**
 
-A list of MapLibre `Feature` objects. This list will contain a single feature for a simple line or multiple features if the line was split at the antimeridian.
+A list of MapLibre `Feature` objects. This list will contain a single feature for a simple line or
+multiple features if the line was split at the antimeridian.
 
-### Example
+## Example
 
 ```kotlin
 import androidx.compose.ui.graphics.Color
@@ -81,11 +100,12 @@ val lineFeatures = createMapLibreLines(
 
 ---
 
-## `createMapLibrePolygons`
+# `createMapLibrePolygons`
 
-This internal function constructs a list of MapLibre `Feature` objects representing one or more polygons. It supports geodesic boundaries, holes, and antimeridian splitting.
+This internal function constructs a list of MapLibre `Feature` objects representing one or more
+polygons. It supports geodesic boundaries, holes, and antimeridian splitting.
 
-### Signature
+## Signature
 
 ```kotlin
 internal fun createMapLibrePolygons(
@@ -98,34 +118,53 @@ internal fun createMapLibrePolygons(
 ): List<Feature>
 ```
 
-### Description
+## Description
 
-The `createMapLibrePolygons` function generates MapLibre `Polygon` features from a set of boundary points and optional holes.
+The `createMapLibrePolygons` function generates MapLibre `Polygon` features from a set of boundary
+points and optional holes.
 
 Key features include:
 *   **Interpolation**: Creates polygon edges that are either geodesic (great circle) or linear.
-*   **Holes**: Supports the creation of polygons with inner boundaries (holes). Note that holes are only applied if the outer boundary does not cross the antimeridian.
-*   **Antimeridian Splitting**: Automatically splits a polygon that crosses the 180° meridian into multiple valid polygon features.
+*   **Holes**: Supports the creation of polygons with inner boundaries (holes). Note that holes are
+    only applied if the outer boundary does not cross the antimeridian.
+*   **Antimeridian Splitting**: Automatically splits a polygon that crosses the 180° meridian into
+    multiple valid polygon features.
 *   **Styling**: Attaches properties for styling, such as fill color, to the generated features.
 
-### Parameters
+## Parameters
 
-| Name        | Type                            | Description                                                                                                                            |
-|-------------|---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
-| `id`        | `String`                        | A unique base identifier for the polygon. An index will be appended for each feature created (e.g., `polygon-area51-0`).                 |
-| `points`    | `List<GeoPointInterface>`       | A list of `GeoPointInterface` objects defining the outer boundary (ring) of the polygon. The function automatically closes the ring.     |
-| `holes`     | `List<List<GeoPointInterface>>` | A list of inner rings, where each inner ring is a list of points defining a hole. Defaults to an empty list.                           |
-| `geodesic`  | `Boolean`                       | If `true`, the polygon edges follow a great circle path. If `false`, they are straight lines on the Mercator projection.               |
-| `fillColor` | `Color`                         | The fill color of the polygon, provided as a `androidx.compose.ui.graphics.Color`.                                                     |
-| `zIndex`    | `Int`                           | The drawing order of the polygon. Higher values are drawn on top.                                                                      |
+- `id`
+    - Type: `String`
+    - Description: A unique base identifier for the polygon. An index will be appended for each
+                   feature created (e.g., `polygon-area51-0`).
+- `points`
+    - Type: `List<GeoPointInterface>`
+    - Description: A list of `GeoPointInterface` objects defining the outer boundary (ring) of the
+                   polygon. The function automatically closes the ring.
+- `holes`
+    - Type: `List<List<GeoPointInterface>>`
+    - Description: A list of inner rings, where each inner ring is a list of points defining a hole.
+                   Defaults to an empty list.
+- `geodesic`
+    - Type: `Boolean`
+    - Description: If `true`, the polygon edges follow a great circle path. If `false`, they are
+                   straight lines on the Mercator projection.
+- `fillColor`
+    - Type: `Color`
+    - Description: The fill color of the polygon, provided as a
+                   `androidx.compose.ui.graphics.Color`.
+- `zIndex`
+    - Type: `Int`
+    - Description: The drawing order of the polygon. Higher values are drawn on top.
 
-### Returns
+## Returns
 
 **`List<Feature>`**
 
-A list of MapLibre `Feature` objects. This list will contain a single feature for a simple polygon or multiple features if the polygon was split at the antimeridian.
+A list of MapLibre `Feature` objects. This list will contain a single feature for a simple polygon
+or multiple features if the polygon was split at the antimeridian.
 
-### Example
+## Example
 
 ```kotlin
 import androidx.compose.ui.graphics.Color
@@ -162,27 +201,31 @@ val polygonFeatures = createMapLibrePolygons(
 
 ---
 
-## `Color.toMapLibreColorString`
+# `Color.toMapLibreColorString`
 
-An extension function that converts a Jetpack Compose `Color` into a MapLibre-compatible RGBA string.
+An extension function that converts a Jetpack Compose `Color` into a MapLibre-compatible RGBA
+string.
 
-### Signature
+## Signature
 
 ```kotlin
 fun Color.toMapLibreColorString(): String
 ```
 
-### Description
+## Description
 
-This utility function takes a `androidx.compose.ui.graphics.Color` object and converts its red, green, blue, and alpha components into the `rgba(r, g, b, a)` string format required by MapLibre style expressions. The color components are scaled from the `[0.0, 1.0]` float range to the `[0, 255]` integer range.
+This utility function takes a `androidx.compose.ui.graphics.Color` object and converts its red,
+green, blue, and alpha components into the `rgba(r, g, b, a)` string format required by MapLibre
+style expressions. The color components are scaled from the `[0.0, 1.0]` float range to the `[0,
+255]` integer range.
 
-### Returns
+## Returns
 
 **`String`**
 
 The RGBA string representation of the color (e.g., `"rgba(255, 0, 0, 0.5)"`).
 
-### Example
+## Example
 
 ```kotlin
 import androidx.compose.ui.graphics.Color

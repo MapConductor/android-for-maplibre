@@ -1,12 +1,11 @@
-Of course! Here is the high-quality SDK documentation for the provided code snippet.
-
----
-
 # ZoomAltitudeConverter
 
-The `ZoomAltitudeConverter` class provides utility functions to convert between a MapLibre map's zoom level and the camera's altitude in meters. It accounts for factors like latitude and camera tilt to provide more accurate conversions.
+The `ZoomAltitudeConverter` class provides utility functions to convert between a MapLibre map's
+zoom level and the camera's altitude in meters. It accounts for factors like latitude and camera
+tilt to provide more accurate conversions.
 
-This class extends `AbstractZoomAltitudeConverter` and is specifically tailored for the MapLibre SDK's zoom behavior, which differs slightly from other mapping platforms like Google Maps.
+This class extends `AbstractZoomAltitudeConverter` and is specifically tailored for the MapLibre
+SDK's zoom behavior, which differs slightly from other mapping platforms like Google Maps.
 
 ## Signature
 
@@ -24,9 +23,10 @@ Creates a new instance of the `ZoomAltitudeConverter`.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `zoom0Altitude` | `Double` | The camera altitude in meters that corresponds to zoom level 0 at the equator. Defaults to `DEFAULT_ZOOM0_ALTITUDE`. |
+- `zoom0Altitude`
+    - Type: `Double`
+    - Description: The camera altitude in meters that corresponds to zoom level 0 at the equator.
+                   Defaults to `DEFAULT_ZOOM0_ALTITUDE`.
 
 ---
 
@@ -34,7 +34,8 @@ Creates a new instance of the `ZoomAltitudeConverter`.
 
 ### `MAPLIBRE_TO_GOOGLE_ZOOM_OFFSET`
 
-An empirical constant representing the approximate offset between MapLibre SDK zoom levels and Google Maps zoom levels.
+An empirical constant representing the approximate offset between MapLibre SDK zoom levels and
+Google Maps zoom levels.
 
 #### Signature
 
@@ -46,7 +47,8 @@ const val MAPLIBRE_TO_GOOGLE_ZOOM_OFFSET = 1.0
 
 ### `maplibreZoomToGoogleZoom()`
 
-Converts a MapLibre zoom level to its approximate Google Maps equivalent by adding the `MAPLIBRE_TO_GOOGLE_ZOOM_OFFSET`. The result is clamped to a valid zoom range.
+Converts a MapLibre zoom level to its approximate Google Maps equivalent by adding the
+`MAPLIBRE_TO_GOOGLE_ZOOM_OFFSET`. The result is clamped to a valid zoom range.
 
 #### Signature
 
@@ -56,9 +58,9 @@ fun maplibreZoomToGoogleZoom(maplibreZoom: Double): Double
 
 #### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `maplibreZoom` | `Double` | The zoom level from the MapLibre SDK. |
+- `maplibreZoom`
+    - Type: `Double`
+    - Description: The zoom level from the MapLibre SDK.
 
 #### Returns
 
@@ -68,7 +70,8 @@ fun maplibreZoomToGoogleZoom(maplibreZoom: Double): Double
 
 ### `googleZoomToMaplibreZoom()`
 
-Converts a Google Maps zoom level to its approximate MapLibre equivalent by subtracting the `MAPLIBRE_TO_GOOGLE_ZOOM_OFFSET`. The result is clamped to a valid zoom range.
+Converts a Google Maps zoom level to its approximate MapLibre equivalent by subtracting the
+`MAPLIBRE_TO_GOOGLE_ZOOM_OFFSET`. The result is clamped to a valid zoom range.
 
 #### Signature
 
@@ -78,9 +81,9 @@ fun googleZoomToMaplibreZoom(googleZoom: Double): Double
 
 #### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `googleZoom` | `Double` | The zoom level from a Google Maps context. |
+- `googleZoom`
+    - Type: `Double`
+    - Description: The zoom level from a Google Maps context.
 
 #### Returns
 
@@ -92,7 +95,9 @@ fun googleZoomToMaplibreZoom(googleZoom: Double): Double
 
 ### `zoomLevelToAltitude()`
 
-Calculates the camera altitude in meters that corresponds to a given MapLibre zoom level, latitude, and camera tilt. The calculation first converts the MapLibre zoom to a Google-style zoom level for a more standardized altitude formula.
+Calculates the camera altitude in meters that corresponds to a given MapLibre zoom level, latitude,
+and camera tilt. The calculation first converts the MapLibre zoom to a Google-style zoom level for a
+more standardized altitude formula.
 
 #### Signature
 
@@ -106,21 +111,27 @@ override fun zoomLevelToAltitude(
 
 #### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `zoomLevel` | `Double` | The target MapLibre zoom level. |
-| `latitude` | `Double` | The current latitude of the map's center, in degrees. |
-| `tilt` | `Double` | The current camera tilt (pitch), in degrees. |
+- `zoomLevel`
+    - Type: `Double`
+    - Description: The target MapLibre zoom level.
+- `latitude`
+    - Type: `Double`
+    - Description: The current latitude of the map's center, in degrees.
+- `tilt`
+    - Type: `Double`
+    - Description: The current camera tilt (pitch), in degrees.
 
 #### Returns
 
-`Double` - The calculated camera altitude in meters, clamped within a valid range (`MIN_ALTITUDE` to `MAX_ALTITUDE`).
+`Double` - The calculated camera altitude in meters, clamped within a valid range (`MIN_ALTITUDE` to
+`MAX_ALTITUDE`).
 
 ---
 
 ### `altitudeToZoomLevel()`
 
-Calculates the MapLibre zoom level that corresponds to a given camera altitude, latitude, and camera tilt.
+Calculates the MapLibre zoom level that corresponds to a given camera altitude, latitude, and camera
+tilt.
 
 #### Signature
 
@@ -134,11 +145,15 @@ override fun altitudeToZoomLevel(
 
 #### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `altitude` | `Double` | The camera's altitude above the map surface, in meters. |
-| `latitude` | `Double` | The current latitude of the map's center, in degrees. |
-| `tilt` | `Double` | The current camera tilt (pitch), in degrees. |
+- `altitude`
+    - Type: `Double`
+    - Description: The camera's altitude above the map surface, in meters.
+- `latitude`
+    - Type: `Double`
+    - Description: The current latitude of the map's center, in degrees.
+- `tilt`
+    - Type: `Double`
+    - Description: The current camera tilt (pitch), in degrees.
 
 #### Returns
 

@@ -1,8 +1,11 @@
 # MarkerDragLayer
 
-The `MarkerDragLayer` class extends `MarkerLayer` to manage a dedicated layer for a single, selected marker. It is primarily used to visualize a marker as it is being dragged across the map, providing methods to update its position and redraw it efficiently.
+The `MarkerDragLayer` class extends `MarkerLayer` to manage a dedicated layer for a single, selected
+marker. It is primarily used to visualize a marker as it is being dragged across the map, providing
+methods to update its position and redraw it efficiently.
 
-This layer is designed to hold at most one marker at a time, which is represented by the `selected` property.
+This layer is designed to hold at most one marker at a time, which is represented by the `selected`
+property.
 
 ## Constructor
 
@@ -12,16 +15,19 @@ Initializes a new instance of the `MarkerDragLayer`.
 
 #### Parameters
 
-| Parameter | Type   | Description                               |
-| :-------- | :----- | :---------------------------------------- |
-| `sourceId`  | `String` | The unique identifier for the GeoJSON source of this layer. |
-| `layerId`   | `String` | The unique identifier for the map layer.  |
+- `sourceId`
+    - Type: `String`
+    - Description: The unique identifier for the GeoJSON source of this layer.
+- `layerId`
+    - Type: `String`
+    - Description: The unique identifier for the map layer.
 
 ## Properties
 
 ### `selected`
 
-The marker entity that is currently selected for dragging. The layer will only draw this marker. When set to `null`, the layer will be empty.
+The marker entity that is currently selected for dragging. The layer will only draw this marker.
+When set to `null`, the layer will be empty.
 
 **Signature**
 ```kotlin
@@ -32,7 +38,8 @@ var selected: MarkerEntityInterface<MapLibreActualMarker>? = null
 
 ### `updatePosition`
 
-Updates the in-memory geographical position of the `selected` marker entity. This change is not visually reflected on the map until the `draw()` method is called.
+Updates the in-memory geographical position of the `selected` marker entity. This change is not
+visually reflected on the map until the `draw()` method is called.
 
 **Signature**
 ```kotlin
@@ -41,9 +48,9 @@ fun updatePosition(geoPoint: GeoPoint)
 
 **Parameters**
 
-| Parameter  | Type      | Description                               |
-| :--------- | :-------- | :---------------------------------------- |
-| `geoPoint` | `GeoPoint`  | The new geographical coordinates for the selected marker. |
+- `geoPoint`
+    - Type: `GeoPoint`
+    - Description: The new geographical coordinates for the selected marker.
 
 **Returns**
 
@@ -51,7 +58,9 @@ fun updatePosition(geoPoint: GeoPoint)
 
 ### `draw`
 
-Renders the `selected` marker on the map based on its current state. This method creates a `FeatureCollection` containing only the selected marker and updates the `GeoJsonSource` associated with this layer. If the source is already part of the map's style, it will be updated directly.
+Renders the `selected` marker on the map based on its current state. This method creates a
+`FeatureCollection` containing only the selected marker and updates the `GeoJsonSource` associated
+with this layer. If the source is already part of the map's style, it will be updated directly.
 
 **Signature**
 ```kotlin
@@ -60,9 +69,9 @@ fun draw(style: Style)
 
 **Parameters**
 
-| Parameter | Type    | Description                                      |
-| :-------- | :------ | :----------------------------------------------- |
-| `style`   | `Style` | The `Style` object of the map where the marker will be drawn. |
+- `style`
+    - Type: `Style`
+    - Description: The `Style` object of the map where the marker will be drawn.
 
 **Returns**
 

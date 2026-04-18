@@ -1,12 +1,12 @@
-Of course! Here is the high-quality SDK documentation for the provided code snippet.
-
----
-
 # MapLibrePolygonConductor
 
-The `MapLibrePolygonConductor` class is a controller responsible for managing polygon overlays on a MapLibre map. It implements the `OverlayControllerInterface` to handle the lifecycle of polygons, including their creation, update, and removal. This conductor also manages the rendering of polygon outlines by creating corresponding polylines.
+The `MapLibrePolygonConductor` class is a controller responsible for managing polygon overlays on a
+MapLibre map. It implements the `OverlayControllerInterface` to handle the lifecycle of polygons,
+including their creation, update, and removal. This conductor also manages the rendering of polygon
+outlines by creating corresponding polylines.
 
-It acts as a bridge between the abstract `PolygonState` data and the concrete rendering implementation provided by `MapLibrePolygonOverlayRenderer` and `MapLibrePolylineOverlayRenderer`.
+It acts as a bridge between the abstract `PolygonState` data and the concrete rendering
+implementation provided by `MapLibrePolygonOverlayRenderer` and `MapLibrePolylineOverlayRenderer`.
 
 ## Signature
 
@@ -38,16 +38,19 @@ MapLibrePolygonConductor(
 
 #### Parameters
 
-| Parameter         | Type                               | Description                                                              |
-| ----------------- | ---------------------------------- | ------------------------------------------------------------------------ |
-| `polygonOverlay`  | `MapLibrePolygonOverlayRenderer`   | The renderer responsible for drawing the filled area of the polygons.    |
-| `polylineOverlay` | `MapLibrePolylineOverlayRenderer`  | The renderer responsible for drawing the outlines (strokes) of the polygons. |
+- `polygonOverlay`
+    - Type: `MapLibrePolygonOverlayRenderer`
+    - Description: The renderer responsible for drawing the filled area of the polygons.
+- `polylineOverlay`
+    - Type: `MapLibrePolylineOverlayRenderer`
+    - Description: The renderer responsible for drawing the outlines (strokes) of the polygons.
 
 ## Properties
 
 ### `zIndex`
 
-Specifies the drawing order of the overlay on the map. Higher values are drawn on top of lower values.
+Specifies the drawing order of the overlay on the map. Higher values are drawn on top of lower
+values.
 
 #### Signature
 
@@ -57,7 +60,8 @@ override val zIndex: Int = 2
 
 ### `clickListener`
 
-A callback function that is invoked when any polygon managed by this conductor is clicked. This provides a centralized way to handle click events for all polygons.
+A callback function that is invoked when any polygon managed by this conductor is clicked. This
+provides a centralized way to handle click events for all polygons.
 
 #### Signature
 
@@ -69,7 +73,9 @@ override var clickListener: ((PolygonEvent) -> Unit)? = null
 
 ### `add`
 
-Adds a list of polygons to the map. This method efficiently synchronizes the state of the map with the provided list. It adds new polygons, updates existing ones, and removes any polygons that are not in the new list. It also creates and manages the corresponding outlines for each polygon.
+Adds a list of polygons to the map. This method efficiently synchronizes the state of the map with
+the provided list. It adds new polygons, updates existing ones, and removes any polygons that are
+not in the new list. It also creates and manages the corresponding outlines for each polygon.
 
 #### Signature
 
@@ -79,13 +85,14 @@ override suspend fun add(data: List<PolygonState>)
 
 #### Parameters
 
-| Parameter | Type                | Description                               |
-| --------- | ------------------- | ----------------------------------------- |
-| `data`    | `List<PolygonState>` | A list of `PolygonState` objects to display on the map. |
+- `data`
+    - Type: `List<PolygonState>`
+    - Description: A list of `PolygonState` objects to display on the map.
 
 ### `update`
 
-Updates a single polygon on the map based on its `PolygonState`. If a polygon with the same ID already exists, its properties will be updated. If it does not exist, a new polygon will be created.
+Updates a single polygon on the map based on its `PolygonState`. If a polygon with the same ID
+already exists, its properties will be updated. If it does not exist, a new polygon will be created.
 
 #### Signature
 
@@ -95,13 +102,15 @@ override suspend fun update(state: PolygonState)
 
 #### Parameters
 
-| Parameter | Type           | Description                                      |
-| --------- | -------------- | ------------------------------------------------ |
-| `state`   | `PolygonState` | The state object representing the polygon to update or add. |
+- `state`
+    - Type: `PolygonState`
+    - Description: The state object representing the polygon to update or add.
 
 ### `dispatchClick`
 
-Dispatches a click event. This method is typically called by the underlying map framework when a tap is detected on a polygon. It triggers the `onClick` handler defined within the specific `PolygonEvent.state` and also invokes the global `clickListener` if it has been set.
+Dispatches a click event. This method is typically called by the underlying map framework when a tap
+is detected on a polygon. It triggers the `onClick` handler defined within the specific
+`PolygonEvent.state` and also invokes the global `clickListener` if it has been set.
 
 #### Signature
 
@@ -111,9 +120,9 @@ fun dispatchClick(event: PolygonEvent)
 
 #### Parameters
 
-| Parameter | Type           | Description                               |
-| --------- | -------------- | ----------------------------------------- |
-| `event`   | `PolygonEvent` | The event object containing details about the click. |
+- `event`
+    - Type: `PolygonEvent`
+    - Description: The event object containing details about the click.
 
 ### `find`
 
@@ -127,15 +136,15 @@ override fun find(position: GeoPointInterface): PolygonEntityInterface<PolygonSt
 
 #### Parameters
 
-| Parameter  | Type                | Description                                  |
-| ---------- | ------------------- | -------------------------------------------- |
-| `position` | `GeoPointInterface` | The geographic coordinate (latitude and longitude) to search at. |
+- `position`
+    - Type: `GeoPointInterface`
+    - Description: The geographic coordinate (latitude and longitude) to search at.
 
 #### Returns
 
-| Type                                     | Description                                                              |
-| ---------------------------------------- | ------------------------------------------------------------------------ |
-| `PolygonEntityInterface<PolygonState>?`  | The found polygon entity, or `null` if no polygon is found at the specified position. |
+- Type: `PolygonEntityInterface<PolygonState>?`
+    - Description: The found polygon entity, or `null` if no polygon is found at the specified
+                   position.
 
 ### `clear`
 
@@ -149,7 +158,8 @@ override suspend fun clear()
 
 ### `onCameraChanged`
 
-A lifecycle method called when the map's camera position changes. This implementation is currently empty.
+A lifecycle method called when the map's camera position changes. This implementation is currently
+empty.
 
 #### Signature
 
@@ -159,7 +169,8 @@ override suspend fun onCameraChanged(mapCameraPosition: MapCameraPosition)
 
 ### `destroy`
 
-Cleans up resources used by the conductor. This implementation is currently empty as there are no specific native resources to release for polygons.
+Cleans up resources used by the conductor. This implementation is currently empty as there are no
+specific native resources to release for polygons.
 
 #### Signature
 
@@ -169,7 +180,8 @@ override fun destroy()
 
 ## Example
 
-Here's an example of how to instantiate and use `MapLibrePolygonConductor` to manage polygons on a map.
+Here's an example of how to instantiate and use `MapLibrePolygonConductor` to manage polygons on a
+map.
 
 ```kotlin
 // 1. Assume polygonOverlay and polylineOverlay are already initialized

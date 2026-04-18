@@ -1,8 +1,12 @@
 # MapLibreMarkerController
 
-The `MapLibreMarkerController` class is responsible for managing the lifecycle of markers on a MapLibre map. It handles adding, updating, removing, and finding markers. For performance optimization with a large number of markers, it can automatically switch to rendering markers as raster tiles.
+The `MapLibreMarkerController` class is responsible for managing the lifecycle of markers on a
+MapLibre map. It handles adding, updating, removing, and finding markers. For performance
+optimization with a large number of markers, it can automatically switch to rendering markers as
+raster tiles.
 
-This controller extends `AbstractMarkerController` and works in conjunction with a `MapLibreMarkerOverlayRenderer` to draw markers on the map.
+This controller extends `AbstractMarkerController` and works in conjunction with a
+`MapLibreMarkerOverlayRenderer` to draw markers on the map.
 
 ## Signature
 
@@ -19,10 +23,13 @@ Creates an instance of the marker controller.
 
 ### Parameters
 
-| Parameter      | Type                            | Description                                                                                                                            |
-| :------------- | :------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------- |
-| `renderer`     | `MapLibreMarkerOverlayRenderer` | The renderer responsible for drawing markers and overlays on the map.                                                                  |
-| `markerTiling` | `MarkerTilingOptions`           | (Optional) Configuration for the marker tiling feature, which improves performance for large datasets. Defaults to `MarkerTilingOptions.Default`. |
+- `renderer`
+    - Type: `MapLibreMarkerOverlayRenderer`
+    - Description: The renderer responsible for drawing markers and overlays on the map.
+- `markerTiling`
+    - Type: `MarkerTilingOptions`
+    - Description: (Optional) Configuration for the marker tiling feature, which improves
+                   performance for large datasets. Defaults to `MarkerTilingOptions.Default`.
 
 ---
 
@@ -30,7 +37,9 @@ Creates an instance of the marker controller.
 
 ### setRasterLayerCallback
 
-Registers a callback to be invoked when the raster layer for tiled markers is created, updated, or removed. This is essential for integrating the tiled marker layer into the map's style, as the map needs to be told to add, update, or remove the corresponding `RasterLayerState`.
+Registers a callback to be invoked when the raster layer for tiled markers is created, updated, or
+removed. This is essential for integrating the tiled marker layer into the map's style, as the map
+needs to be told to add, update, or remove the corresponding `RasterLayerState`.
 
 #### Signature
 
@@ -40,15 +49,18 @@ fun setRasterLayerCallback(callback: MarkerTileRasterLayerCallback?)
 
 #### Parameters
 
-| Parameter  | Type                              | Description                                                                                             |
-| :--------- | :-------------------------------- | :------------------------------------------------------------------------------------------------------ |
-| `callback` | `MarkerTileRasterLayerCallback?`  | The callback to handle raster layer state changes. Pass `null` to remove the currently registered callback. |
+- `callback`
+    - Type: `MarkerTileRasterLayerCallback?`
+    - Description: The callback to handle raster layer state changes. Pass `null` to remove the
+                   currently registered callback.
 
 ---
 
 ### find
 
-Finds the nearest marker to a given geographic coordinate. The search considers the marker's icon size, anchor point, and a predefined tap tolerance, making it ideal for implementing marker click/tap listeners.
+Finds the nearest marker to a given geographic coordinate. The search considers the marker's icon
+size, anchor point, and a predefined tap tolerance, making it ideal for implementing marker
+click/tap listeners.
 
 #### Signature
 
@@ -58,19 +70,22 @@ override fun find(position: GeoPointInterface): MarkerEntityInterface<MapLibreAc
 
 #### Parameters
 
-| Parameter  | Type                | Description                                                              |
-| :--------- | :------------------ | :----------------------------------------------------------------------- |
-| `position` | `GeoPointInterface` | The geographic coordinate (e.g., from a map tap event) to search around. |
+- `position`
+    - Type: `GeoPointInterface`
+    - Description: The geographic coordinate (e.g., from a map tap event) to search around.
 
 #### Returns
 
-`MarkerEntityInterface<MapLibreActualMarker>?` — The found marker entity, or `null` if no marker is within the tap tolerance of the specified position.
+`MarkerEntityInterface<MapLibreActualMarker>?` — The found marker entity, or `null` if no marker is
+within the tap tolerance of the specified position.
 
 ---
 
 ### add
 
-Asynchronously adds a list of new markers to the map. Based on the `MarkerTilingOptions` and the number of markers, the controller will decide whether to render them individually or as part of a raster tile layer for better performance.
+Asynchronously adds a list of new markers to the map. Based on the `MarkerTilingOptions` and the
+number of markers, the controller will decide whether to render them individually or as part of a
+raster tile layer for better performance.
 
 #### Signature
 
@@ -80,15 +95,18 @@ override suspend fun add(data: List<MarkerState>)
 
 #### Parameters
 
-| Parameter | Type                | Description                                                              |
-| :-------- | :------------------ | :----------------------------------------------------------------------- |
-| `data`    | `List<MarkerState>` | A list of `MarkerState` objects, each defining the properties of a marker. |
+- `data`
+    - Type: `List<MarkerState>`
+    - Description: A list of `MarkerState` objects, each defining the properties of a marker.
 
 ---
 
 ### update
 
-Asynchronously updates the state of an existing marker, identified by `state.id`. If the marker's properties have changed, it will be redrawn. This method also handles the transition of a marker between being rendered individually and as part of a tile layer (e.g., if a marker becomes non-draggable, it may be moved to the tile layer).
+Asynchronously updates the state of an existing marker, identified by `state.id`. If the marker's
+properties have changed, it will be redrawn. This method also handles the transition of a marker
+between being rendered individually and as part of a tile layer (e.g., if a marker becomes
+non-draggable, it may be moved to the tile layer).
 
 #### Signature
 
@@ -98,9 +116,10 @@ override suspend fun update(state: MarkerState)
 
 #### Parameters
 
-| Parameter | Type          | Description                                                                                             |
-| :-------- | :------------ | :------------------------------------------------------------------------------------------------------ |
-| `state`   | `MarkerState` | The new state for the marker. The `id` field must match the ID of an existing marker to be updated. |
+- `state`
+    - Type: `MarkerState`
+    - Description: The new state for the marker. The `id` field must match the ID of an existing
+                   marker to be updated.
 
 ---
 
@@ -118,7 +137,10 @@ override suspend fun clear()
 
 ### destroy
 
-Releases all resources held by the controller. This includes unregistering the tile provider from the `TileServerRegistry` and signaling the removal of any active raster layers. This method must be called when the controller is no longer needed (e.g., when the map view is destroyed) to prevent memory leaks.
+Releases all resources held by the controller. This includes unregistering the tile provider from
+the `TileServerRegistry` and signaling the removal of any active raster layers. This method must be
+called when the controller is no longer needed (e.g., when the map view is destroyed) to prevent
+memory leaks.
 
 #### Signature
 

@@ -1,10 +1,8 @@
-Of course! Here is the high-quality SDK documentation for the provided code snippet.
+# Class `MapLibreRasterLayerController`
 
----
-
-### Class `MapLibreRasterLayerController`
-
-A controller responsible for managing the lifecycle of raster layers within a MapLibre map environment. It acts as a bridge between the generic `RasterLayerManager` and the MapLibre-specific `MapLibreRasterLayerOverlayRenderer`.
+A controller responsible for managing the lifecycle of raster layers within a MapLibre map
+environment. It acts as a bridge between the generic `RasterLayerManager` and the MapLibre-specific
+`MapLibreRasterLayerOverlayRenderer`.
 
 This controller orchestrates the addition, removal, and styling of raster layers on the map.
 
@@ -16,22 +14,28 @@ class MapLibreRasterLayerController(
 ) : RasterLayerController<MapLibreRasterLayerHandle>(rasterLayerManager, renderer)
 ```
 
-### Constructor Parameters
+# Constructor Parameters
 
-| Parameter            | Type                                                              | Description                                                                                                                            |
-| -------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `rasterLayerManager` | `RasterLayerManagerInterface<MapLibreRasterLayerHandle>`          | An instance that manages the state and lifecycle of raster layer entities. Defaults to a new `RasterLayerManager` instance.        |
-| `renderer`           | `MapLibreRasterLayerOverlayRenderer`                              | The renderer responsible for drawing the raster layers onto the MapLibre map canvas.                                                   |
+- `rasterLayerManager`
+    - Type: `RasterLayerManagerInterface<MapLibreRasterLayerHandle>`
+    - Description: An instance that manages the state and lifecycle of raster layer entities.
+                   Defaults to a new `RasterLayerManager` instance.
+- `renderer`
+    - Type: `MapLibreRasterLayerOverlayRenderer`
+    - Description: The renderer responsible for drawing the raster layers onto the MapLibre map
+                   canvas.
 
 ---
 
-### Methods
+# Methods
 
-#### `reapplyStyle`
+## `reapplyStyle`
 
-Asynchronously reapplies the current style to all managed raster layers. This method is useful for refreshing the visual representation of layers after a style or theme change has occurred.
+Asynchronously reapplies the current style to all managed raster layers. This method is useful for
+refreshing the visual representation of layers after a style or theme change has occurred.
 
-It operates by retrieving the state of all current layers, removing them, and then re-adding them using the renderer. This ensures that any updated style properties are correctly applied.
+It operates by retrieving the state of all current layers, removing them, and then re-adding them
+using the renderer. This ensures that any updated style properties are correctly applied.
 
 **Signature**
 ```kotlin
@@ -48,7 +52,8 @@ None.
 
 **Example**
 
-Here's an example of how to instantiate `MapLibreRasterLayerController` and call `reapplyStyle` from within a coroutine.
+Here's an example of how to instantiate `MapLibreRasterLayerController` and call `reapplyStyle` from
+within a coroutine.
 
 ```kotlin
 import kotlinx.coroutines.launch

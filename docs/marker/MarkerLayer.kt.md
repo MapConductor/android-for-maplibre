@@ -1,8 +1,11 @@
 # MarkerLayer
 
-The `MarkerLayer` class encapsulates the logic for managing and rendering a collection of markers as a single layer on a MapLibre map. It combines a `GeoJsonSource` to hold the marker data and a `SymbolLayer` to define their visual appearance.
+The `MarkerLayer` class encapsulates the logic for managing and rendering a collection of markers as
+a single layer on a MapLibre map. It combines a `GeoJsonSource` to hold the marker data and a
+`SymbolLayer` to define their visual appearance.
 
-This class is responsible for creating and configuring the necessary MapLibre `SymbolLayer` and `GeoJsonSource`, and provides a `draw` method to update the map with a list of marker entities.
+This class is responsible for creating and configuring the necessary MapLibre `SymbolLayer` and
+`GeoJsonSource`, and provides a `draw` method to update the map with a list of marker entities.
 
 ## Constructor
 
@@ -21,20 +24,25 @@ Creates a new instance of `MarkerLayer` with unique identifiers for its underlyi
 
 ### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `sourceId` | `String` | A unique identifier for the `GeoJsonSource` that will contain the marker data. |
-| `layerId` | `String` | A unique identifier for the `SymbolLayer` that will render the markers. |
+- `sourceId`
+    - Type: `String`
+    - Description: A unique identifier for the `GeoJsonSource` that will contain the marker data.
+- `layerId`
+    - Type: `String`
+    - Description: A unique identifier for the `SymbolLayer` that will render the markers.
 
 ## Properties
 
 ### layer: SymbolLayer
 
-The configured MapLibre `SymbolLayer` used to render the markers. This layer is pre-configured to pull styling properties (like icon image, anchor, and Z-index) directly from the properties of the GeoJSON features.
+The configured MapLibre `SymbolLayer` used to render the markers. This layer is pre-configured to
+pull styling properties (like icon image, anchor, and Z-index) directly from the properties of the
+GeoJSON features.
 
 ### source: GeoJsonSource
 
-The MapLibre `GeoJsonSource` that holds the marker data as a `FeatureCollection`. The `draw` method updates this source with the latest marker information.
+The MapLibre `GeoJsonSource` that holds the marker data as a `FeatureCollection`. The `draw` method
+updates this source with the latest marker information.
 
 ## Methods
 
@@ -51,16 +59,23 @@ fun draw(
 
 #### Description
 
-Updates the marker layer with a new set of entities to be displayed on the map. This method filters for visible entities, converts them into a `FeatureCollection`, and updates the `GeoJsonSource` associated with the map's current style.
+Updates the marker layer with a new set of entities to be displayed on the map. This method filters
+for visible entities, converts them into a `FeatureCollection`, and updates the `GeoJsonSource`
+associated with the map's current style.
 
-It includes robust logic to handle cases where the source may have been detached (e.g., after a style reload) by attempting to re-add it if necessary before updating the data. Any failures during the update process are logged without crashing the application.
+It includes robust logic to handle cases where the source may have been detached (e.g., after a
+style reload) by attempting to re-add it if necessary before updating the data. Any failures during
+the update process are logged without crashing the application.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `entities` | `List<MarkerEntityInterface<Feature>>` | A list of marker entities to render. Only entities where `visible` is `true` and `marker` is not `null` will be drawn. |
-| `style` | `org.maplibre.android.maps.Style` | The active MapLibre `Style` object to which the source and layer are attached. |
+- `entities`
+    - Type: `List<MarkerEntityInterface<Feature>>`
+    - Description: A list of marker entities to render. Only entities where `visible` is `true` and
+                   `marker` is not `null` will be drawn.
+- `style`
+    - Type: `org.maplibre.android.maps.Style`
+    - Description: The active MapLibre `Style` object to which the source and layer are attached.
 
 #### Returns
 

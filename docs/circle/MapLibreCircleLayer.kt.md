@@ -1,12 +1,12 @@
-Of course. Here is the high-quality SDK documentation for the `MapLibreCircleLayer` class, meticulously crafted to be clear, accurate, and developer-friendly, with all feedback incorporated.
-
----
-
 # MapLibreCircleLayer
 
-The `MapLibreCircleLayer` class is a comprehensive utility for managing and rendering circles on a MapLibre map. It encapsulates a `GeoJsonSource` and a `CircleLayer`, simplifying the process of drawing circles whose radii are defined in meters.
+The `MapLibreCircleLayer` class is a comprehensive utility for managing and rendering circles on a
+MapLibre map. It encapsulates a `GeoJsonSource` and a `CircleLayer`, simplifying the process of
+drawing circles whose radii are defined in meters.
 
-The class automatically handles the complex conversion from real-world meters to screen pixels, ensuring circles maintain their correct proportional size across different zoom levels and latitudes.
+The class automatically handles the complex conversion from real-world meters to screen pixels,
+ensuring circles maintain their correct proportional size across different zoom levels and
+latitudes.
 
 ## Signature
 
@@ -19,37 +19,55 @@ class MapLibreCircleLayer(
 
 ## Description
 
-This class creates and manages the necessary MapLibre components (`GeoJsonSource` and `CircleLayer`) for displaying circles. You instantiate it with unique IDs for the source and layer. The `layer` property is pre-configured with expressions to dynamically style circles based on properties set in the GeoJSON features. The primary method, `draw()`, is used to update the source with a list of circle entities, causing them to be rendered on the map.
+This class creates and manages the necessary MapLibre components (`GeoJsonSource` and `CircleLayer`)
+for displaying circles. You instantiate it with unique IDs for the source and layer. The `layer`
+property is pre-configured with expressions to dynamically style circles based on properties set in
+the GeoJSON features. The primary method, `draw()`, is used to update the source with a list of
+circle entities, causing them to be rendered on the map.
 
 ## Parameters
 
-| Parameter  | Type     | Description                                                              |
-|------------|----------|--------------------------------------------------------------------------|
-| `sourceId` | `String` | A unique identifier for the underlying `GeoJsonSource` that will hold the circle data. |
-| `layerId`  | `String` | A unique identifier for the `CircleLayer` that will render the circles.  |
+- `sourceId`
+    - Type: `String`
+    - Description: A unique identifier for the underlying `GeoJsonSource` that will hold the circle
+                   data.
+- `layerId`
+    - Type: `String`
+    - Description: A unique identifier for the `CircleLayer` that will render the circles.
 
 ## Properties
 
 ### `source: GeoJsonSource`
 
-The `GeoJsonSource` instance managed by this class. You must add this source to the map's `Style` before drawing.
+The `GeoJsonSource` instance managed by this class. You must add this source to the map's `Style`
+before drawing.
 
 ### `layer: CircleLayer`
 
-The `CircleLayer` instance managed by this class. It is pre-configured to style circles using properties from the source. You must add this layer to the map's `Style` before drawing.
+The `CircleLayer` instance managed by this class. It is pre-configured to style circles using
+properties from the source. You must add this layer to the map's `Style` before drawing.
 
 ## Inner Object: `Prop`
 
-The `Prop` object contains constant keys used to define the properties of each circle within its GeoJSON `Feature`.
+The `Prop` object contains constant keys used to define the properties of each circle within its
+GeoJSON `Feature`.
 
-| Constant              | Type     | Description                                                                                                                                                           |
-|-----------------------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `RADIUS`              | `String` | The key for the circle's radius in meters.                                                                                                                            |
-| `LATITUDE_CORRECTION` | `String` | The key for the latitude correction factor, required for accurate radius rendering in Mercator projection. Calculated as `cos(Math.toRadians(latitude))`.               |
-| `FILL_COLOR`          | `String` | The key for the circle's fill color, expressed as a string (e.g., `"#FF0000"`).                                                                                        |
-| `STROKE_COLOR`        | `String` | The key for the circle's stroke (outline) color, expressed as a string.                                                                                               |
-| `STROKE_WIDTH`        | `String` | The key for the circle's stroke width in pixels.                                                                                                                      |
-| `Z_INDEX`             | `String` | The key for the circle's sort key. Higher values are drawn on top of lower values. This controls the rendering order of overlapping circles within this same layer. |
+- Type: `String`
+    - Description: The key for the circle's radius in meters.
+- Type: `String`
+    - Description: The key for the latitude correction factor, required for accurate radius
+                   rendering in
+  Mercator projection. Calculated as `cos(Math.toRadians(latitude))`.
+- Type: `String`
+    - Description: The key for the circle's fill color, expressed as a string (e.g., `"#FF0000"`).
+- Type: `String`
+    - Description: The key for the circle's stroke (outline) color, expressed as a string.
+- Type: `String`
+    - Description: The key for the circle's stroke width in pixels.
+- Type: `String`
+    - Description: The key for the circle's sort key. Higher values are drawn on top of lower
+                   values.
+  This controls the rendering order of overlapping circles within this same layer.
 
 ## Methods
 
@@ -68,14 +86,22 @@ fun draw(
 
 #### Description
 
-This method takes a list of entities that represent circles and updates the map's data source. It extracts the GeoJSON `Feature` from each entity and sets it on the `GeoJsonSource`. If the source is already part of the map's style, it will be updated efficiently. Otherwise, the internal source object is updated, which will be used when the source is next added to the style.
+This method takes a list of entities that represent circles and updates the map's data source. It
+extracts the GeoJSON `Feature` from each entity and sets it on the `GeoJsonSource`. If the source is
+already part of the map's style, it will be updated efficiently. Otherwise, the internal source
+object is updated, which will be used when the source is next added to the style.
 
 #### Parameters
 
-| Parameter  | Type                                                      | Description                                                                                                                                                                                          |
-|------------|-----------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `entities` | `List<CircleEntityInterface<MapLibreActualCircle>>`       | A list of circle entities to be drawn on the map. Each entity must provide a `MapLibreActualCircle` (which is a `typealias` for a MapLibre `Feature`) via its `circle` property. |
-| `style`    | `org.maplibre.android.maps.Style`                         | The current `Style` object from the MapLibre map. This is used to find and update the source directly for better performance.                                                                       |
+- `entities`
+    - Type: `List<CircleEntityInterface<MapLibreActualCircle>>`
+    - Description: A list of circle entities to be drawn on the map. Each entity must provide a
+                   `MapLibreActualCircle` (which is a `typealias` for a MapLibre `Feature`) via its
+                   `circle` property.
+- `style`
+    - Type: `org.maplibre.android.maps.Style`
+    - Description: The current `Style` object from the MapLibre map. This is used to find and update
+                   the source directly for better performance.
 
 #### Returns
 
@@ -83,7 +109,8 @@ This method does not return any value.
 
 ## Example
 
-The following example demonstrates how to initialize `MapLibreCircleLayer`, add it to a map, and draw a circle.
+The following example demonstrates how to initialize `MapLibreCircleLayer`, add it to a map, and
+draw a circle.
 
 ```kotlin
 import com.google.gson.JsonObject

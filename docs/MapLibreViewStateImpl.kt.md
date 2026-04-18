@@ -1,18 +1,18 @@
-Of course! Here is the high-quality SDK documentation for the provided code snippet, formatted in Markdown.
+# MapLibre State Management for Compose
 
-***
+This document provides an overview of the state management components for the MapLibre map view in a
+Jetpack Compose environment. The primary entry point for developers is the
+`rememberMapLibreMapViewState` composable function.
 
-## MapLibre State Management for Compose
-
-This document provides an overview of the state management components for the MapLibre map view in a Jetpack Compose environment. The primary entry point for developers is the `rememberMapLibreMapViewState` composable function.
-
-### `rememberMapLibreMapViewState`
+## `rememberMapLibreMapViewState`
 
 A Jetpack Compose composable function that creates and remembers an instance of `MapLibreViewState`.
 
-It is the recommended way to create a state object for your map. This function ensures that the map's state, including camera position and style, is correctly preserved across recompositions, configuration changes, and process death.
+It is the recommended way to create a state object for your map. This function ensures that the
+map's state, including camera position and style, is correctly preserved across recompositions,
+configuration changes, and process death.
 
-#### Signature
+### Signature
 
 ```kotlin
 @Composable
@@ -22,18 +22,23 @@ fun rememberMapLibreMapViewState(
 ): MapLibreViewState
 ```
 
-#### Parameters
+### Parameters
 
-| Parameter        | Type                           | Description                                                                                             |
-|------------------|--------------------------------|---------------------------------------------------------------------------------------------------------|
-| `mapDesign`      | `MapLibreMapDesignTypeInterface` | The initial visual style and theme for the map. Defaults to `MapLibreDesign.DemoTiles`.                 |
-| `cameraPosition` | `MapCameraPositionInterface`   | The initial camera settings, including location, zoom, tilt, and bearing. Defaults to `MapCameraPosition.Default`. |
+- `mapDesign`
+    - Type: `MapLibreMapDesignTypeInterface`
+    - Description: The initial visual style and theme for the map. Defaults to
+                   `MapLibreDesign.DemoTiles`.
+- `cameraPosition`
+    - Type: `MapCameraPositionInterface`
+    - Description: The initial camera settings, including location, zoom, tilt, and bearing.
+                   Defaults to `MapCameraPosition.Default`.
 
-#### Returns
+### Returns
 
-A stable `MapLibreViewState` instance that can be used to control the map and is automatically saved and restored.
+A stable `MapLibreViewState` instance that can be used to control the map and is automatically saved
+and restored.
 
-#### Example
+### Example
 
 Here is a basic example of how to create a map state and pass it to a `MapLibreMapView` composable.
 
@@ -69,11 +74,14 @@ fun MyMapScreen() {
 
 ---
 
-### `MapLibreViewState`
+## `MapLibreViewState`
 
-A state-holder class that manages the properties and interactions for a MapLibre map view. It holds the current camera position and map design and provides methods to programmatically control the map. An instance of this class is typically created and managed by the `rememberMapLibreMapViewState` composable.
+A state-holder class that manages the properties and interactions for a MapLibre map view. It holds
+the current camera position and map design and provides methods to programmatically control the map.
+An instance of this class is typically created and managed by the `rememberMapLibreMapViewState`
+composable.
 
-#### Class Signature
+### Class Signature
 
 ```kotlin
 class MapLibreViewState(
@@ -83,18 +91,23 @@ class MapLibreViewState(
 )
 ```
 
-#### Properties
+### Properties
 
-| Property         | Type                             | Description                                                                                                                            |
-|------------------|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
-| `cameraPosition` | `MapCameraPosition`              | (Read-only) Gets the current camera position of the map, including location, zoom, tilt, and bearing.                                  |
-| `mapDesignType`  | `MapLibreMapDesignTypeInterface` | (Read-Write) Gets or sets the current map design/style. Setting a new value will asynchronously update the map's visual appearance. |
+- `cameraPosition`
+    - Type: `MapCameraPosition`
+    - Description: (Read-only) Gets the current camera position of the map, including location,
+                   zoom, tilt, and bearing.
+- `mapDesignType`
+    - Type: `MapLibreMapDesignTypeInterface`
+    - Description: (Read-Write) Gets or sets the current map design/style. Setting a new value will
+                   asynchronously update the map's visual appearance.
 
-#### Methods
+### Methods
 
-##### `moveCameraTo(position: GeoPoint, ...)`
+#### `moveCameraTo(position: GeoPoint, ...)`
 
-Moves the map camera to a specific geographic coordinate, preserving the current zoom, tilt, and bearing.
+Moves the map camera to a specific geographic coordinate, preserving the current zoom, tilt, and
+bearing.
 
 **Signature**
 ```kotlin
@@ -105,12 +118,15 @@ fun moveCameraTo(
 ```
 
 **Parameters**
-| Parameter        | Type    | Description                                                                                             |
-|------------------|---------|---------------------------------------------------------------------------------------------------------|
-| `position`       | `GeoPoint` | The target geographic coordinate (`latitude`, `longitude`) to center the map on.                        |
-| `durationMillis` | `Long?` | The duration of the camera animation in milliseconds. If `null` or `0`, the camera moves instantly. |
+- `position`
+    - Type: `GeoPoint`
+    - Description: The target geographic coordinate (`latitude`, `longitude`) to center the map on.
+- `durationMillis`
+    - Type: `Long?`
+    - Description: The duration of the camera animation in milliseconds. If `null` or `0`, the
+                   camera moves instantly.
 
-##### `moveCameraTo(cameraPosition: MapCameraPosition, ...)`
+#### `moveCameraTo(cameraPosition: MapCameraPosition, ...)`
 
 Moves the map camera to a new, fully specified camera position.
 
@@ -123,25 +139,33 @@ fun moveCameraTo(
 ```
 
 **Parameters**
-| Parameter        | Type                | Description                                                                                             |
-|------------------|---------------------|---------------------------------------------------------------------------------------------------------|
-| `cameraPosition` | `MapCameraPosition` | The target camera state, including position, zoom, tilt, and bearing.                                   |
-| `durationMillis` | `Long?`             | The duration of the camera animation in milliseconds. If `null` or `0`, the camera moves instantly. |
+- `cameraPosition`
+    - Type: `MapCameraPosition`
+    - Description: The target camera state, including position, zoom, tilt, and bearing.
+- `durationMillis`
+    - Type: `Long?`
+    - Description: The duration of the camera animation in milliseconds. If `null` or `0`, the
+                   camera moves instantly.
 
 ---
 
-### `MapLibreMapViewSaver`
+## `MapLibreMapViewSaver`
 
-A `Saver` implementation for `MapLibreViewState`. It handles the serialization and deserialization of the map state, enabling it to be persisted via `rememberSaveable`.
+A `Saver` implementation for `MapLibreViewState`. It handles the serialization and deserialization
+of the map state, enabling it to be persisted via `rememberSaveable`.
 
-This class is used internally by `rememberMapLibreMapViewState` and developers typically do not need to interact with it directly unless implementing custom state-saving logic.
+This class is used internally by `rememberMapLibreMapViewState` and developers typically do not need
+to interact with it directly unless implementing custom state-saving logic.
 
-#### Class Signature
+### Class Signature
 
 ```kotlin
 class MapLibreMapViewSaver : BaseMapViewSaver<MapLibreViewState>()
 ```
 
-#### Description
+### Description
 
-`MapLibreMapViewSaver` saves the essential properties of `MapLibreViewState`, such as the camera position and map style URL, into a `Bundle`. It can then reconstruct the `MapLibreViewState` from this `Bundle` when the composable is recreated, ensuring a seamless user experience across configuration changes.
+`MapLibreMapViewSaver` saves the essential properties of `MapLibreViewState`, such as the camera
+position and map style URL, into a `Bundle`. It can then reconstruct the `MapLibreViewState` from
+this `Bundle` when the composable is recreated, ensuring a seamless user experience across
+configuration changes.

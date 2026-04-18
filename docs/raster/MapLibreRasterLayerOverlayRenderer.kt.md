@@ -1,7 +1,3 @@
-Of course! Here is the high-quality SDK documentation for the provided code snippet.
-
----
-
 # MapLibreRasterLayerOverlayRenderer
 
 ## `MapLibreRasterLayerOverlayRenderer`
@@ -17,22 +13,31 @@ class MapLibreRasterLayerOverlayRenderer(
 
 ### Description
 
-The `MapLibreRasterLayerOverlayRenderer` is a concrete implementation of `RasterLayerOverlayRendererInterface` designed for the MapLibre map SDK. It manages the entire lifecycle of raster layers on the map, including adding, updating, and removing them.
+The `MapLibreRasterLayerOverlayRenderer` is a concrete implementation of
+`RasterLayerOverlayRendererInterface` designed for the MapLibre map SDK. It manages the entire
+lifecycle of raster layers on the map, including adding, updating, and removing them.
 
-This renderer translates abstract `RasterLayerState` objects into tangible MapLibre `RasterSource` and `RasterLayer` objects on the map. It handles various source types, such as URL templates, TileJSON, and ArcGIS services.
+This renderer translates abstract `RasterLayerState` objects into tangible MapLibre `RasterSource`
+and `RasterLayer` objects on the map. It handles various source types, such as URL templates,
+TileJSON, and ArcGIS services.
 
 Key responsibilities include:
 - Creating and managing MapLibre sources and layers for each raster overlay.
 - Applying properties like opacity and visibility.
-- Handling z-ordering for non-marker raster layers by re-adding them in the correct sequence based on their `zIndex`.
-- Special handling for raster layers with an ID prefixed by `marker-tile-` to ensure they are rendered below map markers.
+- Handling z-ordering for non-marker raster layers by re-adding them in the correct sequence based
+  on their `zIndex`.
+- Special handling for raster layers with an ID prefixed by `marker-tile-` to ensure they are
+  rendered below map markers.
 
 ### Constructor
 
-| Parameter   | Type                               | Description                                                                                             |
-| :---------- | :--------------------------------- | :------------------------------------------------------------------------------------------------------ |
-| `holder`    | `MapLibreMapViewHolderInterface`   | An interface providing access to the MapLibre map instance and its style.                               |
-| `coroutine` | `CoroutineScope`                   | The coroutine scope used for executing asynchronous operations. Defaults to `CoroutineScope(Dispatchers.Main)`. |
+- `holder`
+    - Type: `MapLibreMapViewHolderInterface`
+    - Description: An interface providing access to the MapLibre map instance and its style.
+- `coroutine`
+    - Type: `CoroutineScope`
+    - Description: The coroutine scope used for executing asynchronous operations. Defaults to
+                   `CoroutineScope(Dispatchers.Main)`.
 
 ---
 
@@ -50,17 +55,22 @@ override suspend fun onAdd(
 
 #### Description
 
-Adds a list of new raster layers to the map. For each item in the `data` list, it creates a corresponding `RasterSource` and `RasterLayer`, adds them to the map's style, and applies the initial properties (e.g., opacity, visibility). After adding the layers, it rebuilds the z-order of all non-marker raster layers.
+Adds a list of new raster layers to the map. For each item in the `data` list, it creates a
+corresponding `RasterSource` and `RasterLayer`, adds them to the map's style, and applies the
+initial properties (e.g., opacity, visibility). After adding the layers, it rebuilds the z-order of
+all non-marker raster layers.
 
 #### Parameters
 
-| Parameter | Type                                                              | Description                                                              |
-| :-------- | :---------------------------------------------------------------- | :----------------------------------------------------------------------- |
-| `data`    | `List<RasterLayerOverlayRendererInterface.AddParamsInterface>`    | A list of parameters, each containing the `RasterLayerState` for a new layer to be added. |
+- `data`
+    - Type: `List<RasterLayerOverlayRendererInterface.AddParamsInterface>`
+    - Description: A list of parameters, each containing the `RasterLayerState` for a new layer to
+                   be added.
 
 #### Returns
 
-A `List` of `MapLibreRasterLayerHandle?` objects. Each handle corresponds to a newly created layer. A `null` value indicates that the layer could not be added.
+A `List` of `MapLibreRasterLayerHandle?` objects. Each handle corresponds to a newly created layer.
+A `null` value indicates that the layer could not be added.
 
 ---
 
@@ -79,19 +89,22 @@ override suspend fun onChange(
 Processes a list of changes to existing raster layers.
 
 - If a layer's `source` has changed, the old layer and source are removed, and a new set is created.
-- If only properties like `opacity` or `visible` have changed, the existing MapLibre `RasterLayer` is updated in place.
+- If only properties like `opacity` or `visible` have changed, the existing MapLibre `RasterLayer`
+  is updated in place.
 
 After processing all changes, it rebuilds the z-order of all non-marker raster layers.
 
 #### Parameters
 
-| Parameter | Type                                                                                     | Description                                                                                             |
-| :-------- | :--------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------ |
-| `data`    | `List<RasterLayerOverlayRendererInterface.ChangeParamsInterface<MapLibreRasterLayerHandle>>` | A list of change parameters, each containing the previous and current state of a layer. |
+- `data`
+- Type: `List<RasterLayerOverlayRendererInterface.ChangeParamsInterface<MapLibreRasterLayerHandle>>`
+    - Description: A list of change parameters, each containing the previous and current state of a
+                   layer.
 
 #### Returns
 
-A `List` of `MapLibreRasterLayerHandle?` objects. Each handle corresponds to the layer after the update. A `null` value indicates that the layer could not be updated or re-created.
+A `List` of `MapLibreRasterLayerHandle?` objects. Each handle corresponds to the layer after the
+update. A `null` value indicates that the layer could not be updated or re-created.
 
 ---
 
@@ -105,13 +118,15 @@ override suspend fun onRemove(data: List<RasterLayerEntityInterface<MapLibreRast
 
 #### Description
 
-Removes a list of raster layers from the map. For each layer entity provided, it removes both the `RasterLayer` and its associated `RasterSource` from the map's style. After removing the layers, it rebuilds the z-order of the remaining non-marker raster layers.
+Removes a list of raster layers from the map. For each layer entity provided, it removes both the
+`RasterLayer` and its associated `RasterSource` from the map's style. After removing the layers, it
+rebuilds the z-order of the remaining non-marker raster layers.
 
 #### Parameters
 
-| Parameter | Type                                                              | Description                                                              |
-| :-------- | :---------------------------------------------------------------- | :----------------------------------------------------------------------- |
-| `data`    | `List<RasterLayerEntityInterface<MapLibreRasterLayerHandle>>`     | A list of layer entities to be removed from the map.                     |
+- `data`
+    - Type: `List<RasterLayerEntityInterface<MapLibreRasterLayerHandle>>`
+    - Description: A list of layer entities to be removed from the map.
 
 ---
 
@@ -125,7 +140,8 @@ override suspend fun onPostProcess()
 
 #### Description
 
-A lifecycle method called after all add, change, and remove operations in a batch are complete. In this implementation, the method is empty and performs no action.
+A lifecycle method called after all add, change, and remove operations in a batch are complete. In
+this implementation, the method is empty and performs no action.
 
 ---
 
@@ -142,14 +158,18 @@ data class MapLibreRasterLayerHandle(
 
 ### Description
 
-A data class that serves as a handle for a raster layer rendered on the map. It holds the unique identifiers for the MapLibre `RasterSource` and `RasterLayer` that constitute the overlay. This handle is used internally by the renderer to reference and manage specific layers on the map.
+A data class that serves as a handle for a raster layer rendered on the map. It holds the unique
+identifiers for the MapLibre `RasterSource` and `RasterLayer` that constitute the overlay. This
+handle is used internally by the renderer to reference and manage specific layers on the map.
 
 ### Properties
 
-| Property   | Type     | Description                                               |
-| :--------- | :------- | :-------------------------------------------------------- |
-| `sourceId` | `String` | The unique ID of the `RasterSource` in the MapLibre style. |
-| `layerId`  | `String` | The unique ID of the `RasterLayer` in the MapLibre style.  |
+- `sourceId`
+    - Type: `String`
+    - Description: The unique ID of the `RasterSource` in the MapLibre style.
+- `layerId`
+    - Type: `String`
+    - Description: The unique ID of the `RasterLayer` in the MapLibre style.
 
 ### Example
 

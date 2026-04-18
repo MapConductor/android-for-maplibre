@@ -1,8 +1,6 @@
-# SDK Documentation: `MapLibrePolygonLayer`
+# `MapLibrePolygonLayer`
 
-## `MapLibrePolygonLayer`
-
-### Signature
+## Signature
 
 ```kotlin
 class MapLibrePolygonLayer(
@@ -11,28 +9,34 @@ class MapLibrePolygonLayer(
 )
 ```
 
-### Description
+## Description
 
-The `MapLibrePolygonLayer` class manages a dedicated layer for rendering polygons on a MapLibre map. It encapsulates a `GeoJsonSource` to hold polygon data and a `FillLayer` to control their visual representation. This class simplifies the process of creating, styling, and updating a collection of polygons by handling the underlying MapLibre objects and data flow.
+The `MapLibrePolygonLayer` class manages a dedicated layer for rendering polygons on a MapLibre map.
+It encapsulates a `GeoJsonSource` to hold polygon data and a `FillLayer` to control their visual
+representation. This class simplifies the process of creating, styling, and updating a collection of
+polygons by handling the underlying MapLibre objects and data flow.
 
-### Constructor
+## Constructor
 
-#### Signature
+### Signature
 
 ```kotlin
 MapLibrePolygonLayer(sourceId: String, layerId: String)
 ```
 
-#### Description
+### Description
 
-Creates a new instance of `MapLibrePolygonLayer`. Upon instantiation, it initializes a `GeoJsonSource` and a `FillLayer` with the provided IDs.
+Creates a new instance of `MapLibrePolygonLayer`. Upon instantiation, it initializes a
+`GeoJsonSource` and a `FillLayer` with the provided IDs.
 
-#### Parameters
+### Parameters
 
-| Parameter  | Type     | Description                                          |
-|------------|----------|------------------------------------------------------|
-| `sourceId` | `String` | A unique identifier for the underlying `GeoJsonSource`. |
-| `layerId`  | `String` | A unique identifier for the `FillLayer`.             |
+- `sourceId`
+    - Type: `String`
+    - Description: A unique identifier for the underlying `GeoJsonSource`.
+- `layerId`
+    - Type: `String`
+    - Description: A unique identifier for the `FillLayer`.
 
 ---
 
@@ -48,14 +52,19 @@ object Prop
 
 #### Description
 
-A companion object that defines constant keys for properties used within the GeoJSON features. These keys are essential for dynamically styling features based on their data attributes.
+A companion object that defines constant keys for properties used within the GeoJSON features. These
+keys are essential for dynamically styling features based on their data attributes.
 
 #### Properties
 
-| Property     | Type     | Description                                                                                             |
-|--------------|----------|---------------------------------------------------------------------------------------------------------|
-| `FILL_COLOR` | `String` | The key for the feature property that defines the polygon's fill color (e.g., `"#FF0000"`). Value: `"fillColor"`. |
-| `Z_INDEX`    | `String` | The key for the feature property that defines the polygon's stacking order. Value: `"zIndex"`.          |
+- `FILL_COLOR`
+    - Type: `String`
+    - Description: The key for the feature property that defines the polygon's fill color (e.g.,
+                   `"#FF0000"`). Value: `"fillColor"`.
+- `Z_INDEX`
+    - Type: `String`
+    - Description: The key for the feature property that defines the polygon's stacking order.
+                   Value: `"zIndex"`.
 
 ---
 
@@ -63,11 +72,15 @@ A companion object that defines constant keys for properties used within the Geo
 
 ### `source: GeoJsonSource`
 
-The `GeoJsonSource` instance that contains the polygon feature data. This source must be added to the map's `Style` to make the data available for rendering. It is initialized with an empty `FeatureCollection`.
+The `GeoJsonSource` instance that contains the polygon feature data. This source must be added to
+the map's `Style` to make the data available for rendering. It is initialized with an empty
+`FeatureCollection`.
 
 ### `layer: FillLayer`
 
-The `FillLayer` instance used to render the polygons from the `source`. This layer is pre-configured to derive its fill color from the `fillColor` property of each GeoJSON feature. It must be added to the map's `Style` to make the polygons visible.
+The `FillLayer` instance used to render the polygons from the `source`. This layer is pre-configured
+to derive its fill color from the `fillColor` property of each GeoJSON feature. It must be added to
+the map's `Style` to make the polygons visible.
 
 ---
 
@@ -86,16 +99,24 @@ fun draw(
 
 #### Description
 
-Renders or updates the polygons on the map. This method processes a list of `PolygonEntityInterface` objects, converts them into GeoJSON `Feature`s, and updates the `GeoJsonSource`. The polygons are sorted by their `zIndex` property to control drawing order.
+Renders or updates the polygons on the map. This method processes a list of `PolygonEntityInterface`
+objects, converts them into GeoJSON `Feature`s, and updates the `GeoJsonSource`. The polygons are
+sorted by their `zIndex` property to control drawing order.
 
-The method first attempts to update the source directly from the map's `Style` object for optimal performance. If the style-bound source is not accessible (e.g., during initial setup), it falls back to updating its local `source` property.
+The method first attempts to update the source directly from the map's `Style` object for optimal
+performance. If the style-bound source is not accessible (e.g., during initial setup), it falls back
+to updating its local `source` property.
 
 #### Parameters
 
-| Parameter  | Type                                                          | Description                                                                                             |
-|------------|---------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| `entities` | `List<PolygonEntityInterface<MapLibreActualPolygon>>` | A list of polygon entities to display on the map. Each entity provides its geometry and state properties. |
-| `style`    | `org.maplibre.android.maps.Style`                             | The current `Style` object of the map to which the source is (or will be) attached.                     |
+- `entities`
+    - Type: `List<PolygonEntityInterface<MapLibreActualPolygon>>`
+    - Description: A list of polygon entities to display on the map. Each entity provides its
+                   geometry and state properties.
+- `style`
+    - Type: `org.maplibre.android.maps.Style`
+    - Description: The current `Style` object of the map to which the source is (or will be)
+                   attached.
 
 #### Returns
 
@@ -105,7 +126,8 @@ The method first attempts to update the source directly from the map's `Style` o
 
 ### Example
 
-The following example demonstrates how to initialize `MapLibrePolygonLayer`, add it to a map, and use the `draw` method to render polygons.
+The following example demonstrates how to initialize `MapLibrePolygonLayer`, add it to a map, and
+use the `draw` method to render polygons.
 
 ```kotlin
 // This code typically runs inside your map's onStyleLoaded callback.
