@@ -131,7 +131,7 @@ class MapLibreViewController(
         if (style.getLayer(layerId) != null) return
         try {
             style.addLayerAbove(layer, aboveId)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             if (style.getLayer(layerId) != null) return
             try {
                 style.addLayer(layer)
@@ -148,7 +148,7 @@ class MapLibreViewController(
         styleInstance = style
 
         // Log existing layers
-        val topLayerId = style.layers.lastOrNull()?.id
+        // val topLayerId = style.layers.lastOrNull()?.id
 
         // Ensure default icon image exists on this style
         markerController.renderer.ensureDefaultIcon(style)

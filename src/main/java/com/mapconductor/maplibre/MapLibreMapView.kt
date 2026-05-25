@@ -6,11 +6,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.mapconductor.core.circle.CircleManager
-import com.mapconductor.core.circle.OnCircleEventHandler
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MapViewBase
 import com.mapconductor.core.map.MutableMapServiceRegistry
-import com.mapconductor.core.map.OnCameraMoveHandler
 import com.mapconductor.core.map.OnMapEventHandler
 import com.mapconductor.core.map.OnMapLoadedHandler
 import com.mapconductor.core.marker.MarkerEventControllerInterface
@@ -20,11 +18,8 @@ import com.mapconductor.core.marker.MarkerRenderingStrategyInterface
 import com.mapconductor.core.marker.MarkerRenderingSupport
 import com.mapconductor.core.marker.MarkerRenderingSupportKey
 import com.mapconductor.core.marker.MarkerTilingOptions
-import com.mapconductor.core.marker.OnMarkerEventHandler
 import com.mapconductor.core.marker.StrategyMarkerController
-import com.mapconductor.core.polygon.OnPolygonEventHandler
 import com.mapconductor.core.polygon.PolygonManager
-import com.mapconductor.core.polyline.OnPolylineEventHandler
 import com.mapconductor.core.polyline.PolylineManager
 import com.mapconductor.core.tileserver.TileServerRegistry
 import com.mapconductor.maplibre.circle.MapLibreCircleController
@@ -50,7 +45,6 @@ import org.maplibre.android.maps.MapView
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 @Composable
@@ -58,7 +52,7 @@ fun MapLibreMapView(
     state: MapLibreViewState,
     modifier: Modifier = Modifier,
     markerTiling: MarkerTilingOptions? = null,
-    sdkInitialize: (suspend (android.content.Context) -> Boolean)? = null,
+    sdkInitialize: (suspend (Context) -> Boolean)? = null,
     onMapLoaded: OnMapLoadedHandler? = null,
     onMapClick: OnMapEventHandler? = null,
     onMapLongClick: OnMapEventHandler? = null,
@@ -203,12 +197,12 @@ internal fun getMarkerController(
     markerTiling: MarkerTilingOptions,
 ): MapLibreMarkerController {
     val manager = MarkerManager.defaultManager<MapLibreActualMarker>()
-    val markerLayer: MarkerLayer =
+    val markerLayer =
         MarkerLayer(
             sourceId = "markers-source",
             layerId = "markers-layer",
         )
-    val dragLayer: MarkerDragLayer =
+    val dragLayer =
         MarkerDragLayer(
             sourceId = "marker-drag-source",
             layerId = "marker-drag-layer",
@@ -230,7 +224,7 @@ internal fun getMarkerController(
 }
 
 internal fun getPolylineController(holder: MapLibreMapViewHolderInterface): MapLibrePolylineController {
-    val polylineLayer: MapLibrePolylineLayer =
+    val polylineLayer =
         MapLibrePolylineLayer(
             sourceId = "polyline-source",
             layerId = "polyline-layer",
