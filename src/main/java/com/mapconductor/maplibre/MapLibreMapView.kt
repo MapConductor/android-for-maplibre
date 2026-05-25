@@ -53,7 +53,6 @@ import android.content.ContextWrapper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun MapLibreMapView(
     state: MapLibreViewState,
@@ -62,56 +61,7 @@ fun MapLibreMapView(
     sdkInitialize: (suspend (android.content.Context) -> Boolean)? = null,
     onMapLoaded: OnMapLoadedHandler? = null,
     onMapClick: OnMapEventHandler? = null,
-    onCameraMoveStart: OnCameraMoveHandler? = null,
-    onCameraMove: OnCameraMoveHandler? = null,
-    onCameraMoveEnd: OnCameraMoveHandler? = null,
-    content: (@Composable MapLibreMapViewScope.() -> Unit)? = null,
-) {
-    @Suppress("DEPRECATION")
-    MapLibreMapView(
-        state = state,
-        markerTiling = markerTiling,
-        modifier = modifier,
-        sdkInitialize = sdkInitialize,
-        onMapLoaded = onMapLoaded,
-        onMapClick = onMapClick,
-        onCameraMoveStart = onCameraMoveStart,
-        onCameraMove = onCameraMove,
-        onCameraMoveEnd = onCameraMoveEnd,
-        onMarkerClick = null,
-        onMarkerDragStart = null,
-        onMarkerDrag = null,
-        onMarkerDragEnd = null,
-        onMarkerAnimateStart = null,
-        onMarkerAnimateEnd = null,
-        onPolylineClick = null,
-        onCircleClick = null,
-        onPolygonClick = null,
-        content = content,
-    )
-}
-
-@Deprecated("Use CircleState/PolylineState/PolygonState onClick instead.")
-@Composable
-fun MapLibreMapView(
-    state: MapLibreViewState,
-    modifier: Modifier = Modifier,
-    markerTiling: MarkerTilingOptions? = null,
-    sdkInitialize: (suspend (android.content.Context) -> Boolean)? = null,
-    onMapLoaded: OnMapLoadedHandler? = null,
-    onMapClick: OnMapEventHandler? = null,
-    onCameraMoveStart: OnCameraMoveHandler? = null,
-    onCameraMove: OnCameraMoveHandler? = null,
-    onCameraMoveEnd: OnCameraMoveHandler? = null,
-    onMarkerClick: OnMarkerEventHandler?,
-    onMarkerDragStart: OnMarkerEventHandler? = null,
-    onMarkerDrag: OnMarkerEventHandler? = null,
-    onMarkerDragEnd: OnMarkerEventHandler? = null,
-    onMarkerAnimateStart: OnMarkerEventHandler? = null,
-    onMarkerAnimateEnd: OnMarkerEventHandler? = null,
-    onPolylineClick: OnPolylineEventHandler? = null,
-    onCircleClick: OnCircleEventHandler? = null,
-    onPolygonClick: OnPolygonEventHandler? = null,
+    onMapLongClick: OnMapEventHandler? = null,
     content: (@Composable MapLibreMapViewScope.() -> Unit)? = null,
 ) {
     val context = LocalContext.current
@@ -216,29 +166,18 @@ fun MapLibreMapView(
                 mapController.setCameraMoveStartListener {
                     cameraState.value = it
                     state.updateCameraPosition(it)
-                    onCameraMoveStart?.invoke(it)
                 }
                 mapController.setCameraMoveListener {
                     cameraState.value = it
                     state.updateCameraPosition(it)
-                    onCameraMove?.invoke(it)
                 }
                 mapController.setCameraMoveEndListener {
                     cameraState.value = it
                     state.updateCameraPosition(it)
-                    onCameraMoveEnd?.invoke(it)
                 }
                 mapController.setMapClickListener(onMapClick)
                 mapController.setMapDesignTypeChangeListener(state::onMapDesignTypeChange)
-                mapController.setOnMarkerDragStart(onMarkerDragStart)
-                mapController.setOnMarkerDrag(onMarkerDrag)
-                mapController.setOnMarkerDragEnd(onMarkerDragEnd)
-                mapController.setOnMarkerAnimateEnd(onMarkerAnimateEnd)
-                mapController.setOnMarkerAnimateStart(onMarkerAnimateStart)
-                mapController.setOnMarkerClickListener(onMarkerClick)
-                mapController.setOnPolylineClickListener(onPolylineClick)
-                mapController.setOnCircleClickListener(onCircleClick)
-                mapController.setOnPolygonClickListener(onPolygonClick)
+                mapController.setMapLongClickListener(onMapLongClick)
                 state.setController(mapController)
                 // Post an initial camera update after layout to compute visibleRegion correctly
                 holder.mapView.post { mapController.sendInitialCameraUpdate() }

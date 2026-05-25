@@ -11,6 +11,7 @@ import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
+import com.mapconductor.core.map.OnMapInitializedHandler
 import com.mapconductor.core.map.VisibleRegion
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
@@ -91,6 +92,8 @@ class MapLibreViewController(
     private var markerDragEndListener: OnMarkerEventHandler? = null
     private var markerAnimateStartListener: OnMarkerEventHandler? = null
     private var markerAnimateEndListener: OnMarkerEventHandler? = null
+
+    private var involvedMapInitializedCallback: Boolean = false
 
     private fun ensureGeoJsonSource(
         style: Style,
@@ -433,6 +436,10 @@ class MapLibreViewController(
         this.groundImageController.clickListener = listener
     }
 
+    override fun setMapInitializedListener(listener: OnMapInitializedHandler?) {
+        mapInitializedCallback = listener
+    }
+
     override fun onMapClick(point: LatLng): Boolean {
         val touchPosition = point.toGeoPoint()
 
@@ -767,6 +774,10 @@ class MapLibreViewController(
     // Trigger an initial camera update after the view and style are ready
     fun sendInitialCameraUpdate() {
         coroutine.launch {
+            if (!involvedMapInitializedCallback) {
+                involvedMapInitializedCallback = true
+                mapInitializedCallback?.invoke()
+            }
             val mapWidth = holder.mapView.width.toFloat()
             val mapHeight = holder.mapView.height.toFloat()
             if (mapWidth <= 0 || mapHeight <= 0) return@launch
