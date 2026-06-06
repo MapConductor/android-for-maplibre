@@ -9,6 +9,7 @@ import com.mapconductor.core.circle.CircleManager
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MapViewBase
 import com.mapconductor.core.map.MutableMapServiceRegistry
+import com.mapconductor.core.map.OnCameraMoveHandler
 import com.mapconductor.core.map.OnMapEventHandler
 import com.mapconductor.core.map.OnMapLoadedHandler
 import com.mapconductor.core.marker.MarkerEventControllerInterface
@@ -56,6 +57,9 @@ fun MapLibreMapView(
     onMapLoaded: OnMapLoadedHandler? = null,
     onMapClick: OnMapEventHandler? = null,
     onMapLongClick: OnMapEventHandler? = null,
+    onCameraMoveStart: OnCameraMoveHandler? = null,
+    onCameraMove: OnCameraMoveHandler? = null,
+    onCameraMoveEnd: OnCameraMoveHandler? = null,
     content: (@Composable MapLibreMapViewScope.() -> Unit)? = null,
 ) {
     val context = LocalContext.current
@@ -160,14 +164,17 @@ fun MapLibreMapView(
                 mapController.setCameraMoveStartListener {
                     cameraState.value = it
                     state.updateCameraPosition(it)
+                    onCameraMoveStart?.invoke(it)
                 }
                 mapController.setCameraMoveListener {
                     cameraState.value = it
                     state.updateCameraPosition(it)
+                    onCameraMove?.invoke(it)
                 }
                 mapController.setCameraMoveEndListener {
                     cameraState.value = it
                     state.updateCameraPosition(it)
+                    onCameraMoveEnd?.invoke(it)
                 }
                 mapController.setMapClickListener(onMapClick)
                 mapController.setMapDesignTypeChangeListener(state::onMapDesignTypeChange)
