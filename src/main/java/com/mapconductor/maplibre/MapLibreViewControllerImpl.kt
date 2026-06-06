@@ -94,6 +94,7 @@ class MapLibreViewController(
     private var markerAnimateEndListener: OnMarkerEventHandler? = null
 
     private var involvedMapInitializedCallback: Boolean = false
+    private var lastLogicalCameraPosition: MapCameraPosition? = null
 
     private fun ensureGeoJsonSource(
         style: Style,
@@ -286,6 +287,7 @@ class MapLibreViewController(
     }
 
     override fun moveCamera(position: MapCameraPosition) {
+        lastLogicalCameraPosition = position
         coroutine.launch {
             val cameraPos = position.toCameraPosition()
             val cameraUpdate =
@@ -300,6 +302,7 @@ class MapLibreViewController(
         position: MapCameraPosition,
         duration: Long,
     ) {
+        lastLogicalCameraPosition = position
         coroutine.launch {
             val cameraPos = position.toCameraPosition()
             val cameraUpdate =
@@ -309,6 +312,12 @@ class MapLibreViewController(
             cameraMoveEndCallback?.invoke(position)
         }
     }
+
+    private fun readLogicalCameraPosition(): MapCameraPosition =
+        MapLibreCameraStateSnapshot(
+            cameraPosition = holder.map.cameraPosition,
+            logicalTiltHint = lastLogicalCameraPosition?.tilt,
+        ).toMapCameraPosition()
 
     private var mapDesignType: MapLibreMapDesignTypeInterface = MapLibreDesign.DemoTiles
 
@@ -517,7 +526,7 @@ class MapLibreViewController(
 
     override fun onMoveBegin(detector: MoveGestureDetector) {
         coroutine.launch {
-            getMapCameraPosition(holder.map.cameraPosition.toMapCameraPosition())?.let { mapCameraPosition ->
+            getMapCameraPosition(readLogicalCameraPosition())?.let { mapCameraPosition ->
                 cameraMoveStartCallback?.invoke(mapCameraPosition)
             }
         }
@@ -618,7 +627,7 @@ class MapLibreViewController(
 
     override fun onCameraMove() {
         coroutine.launch {
-            getMapCameraPosition(holder.map.cameraPosition.toMapCameraPosition())?.let { mapCameraPosition ->
+            getMapCameraPosition(readLogicalCameraPosition())?.let { mapCameraPosition ->
                 backCoroutine.launch {
                     notifyMapCameraPosition(mapCameraPosition)
                 }
@@ -629,7 +638,7 @@ class MapLibreViewController(
 
     override fun onCameraIdle() {
         coroutine.launch {
-            getMapCameraPosition(holder.map.cameraPosition.toMapCameraPosition())?.let { mapCameraPosition ->
+            getMapCameraPosition(readLogicalCameraPosition())?.let { mapCameraPosition ->
                 backCoroutine.launch {
                     notifyMapCameraPosition(mapCameraPosition)
                 }
@@ -782,7 +791,7 @@ class MapLibreViewController(
             val mapHeight = holder.mapView.height.toFloat()
             if (mapWidth <= 0 || mapHeight <= 0) return@launch
 
-            val camera = holder.map.cameraPosition.toMapCameraPosition()
+            val camera = readLogicalCameraPosition()
             getMapCameraPosition(camera)?.let { mapCameraPosition ->
                 backCoroutine.launch { notifyMapCameraPosition(mapCameraPosition) }
             }
