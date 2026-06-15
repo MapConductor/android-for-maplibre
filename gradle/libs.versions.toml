@@ -1,11 +1,11 @@
 [versions]
-agp = "8.10.1"
-kotlin = "2.2.21"
+agp = "9.2.1"
+kotlin = "2.4.0"
 
 compose = "1.11.2"
 composeBom = "2026.05.01"
 lifecycleRuntimeKtx = "2.10.0"
-mapLibreSdk = "13.1.0"
+mapLibreSdk = "13.3.0"
 mapLibreAnnotation = "3.0.2"
 activityCompose = "1.13.0"
 ktLint = "14.2.0"
