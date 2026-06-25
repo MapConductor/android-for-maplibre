@@ -313,6 +313,18 @@ class MapLibreViewController(
         }
     }
 
+    override fun fitBounds(
+        bounds: GeoRectBounds,
+        padding: Int,
+    ) {
+        val latLngBounds = bounds.toLatLngBounds() ?: return
+        val cameraUpdate = CameraUpdateFactory.newLatLngBounds(latLngBounds, padding)
+        coroutine.launch {
+            holder.map.moveCamera(cameraUpdate)
+            cameraMoveEndCallback?.invoke(readLogicalCameraPosition())
+        }
+    }
+
     private fun readLogicalCameraPosition(): MapCameraPosition =
         MapLibreCameraStateSnapshot(
             cameraPosition = holder.map.cameraPosition,
