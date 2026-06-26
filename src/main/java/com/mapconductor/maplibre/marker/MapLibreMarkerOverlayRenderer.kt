@@ -1,5 +1,6 @@
 package com.mapconductor.maplibre.marker
 
+import android.graphics.Bitmap
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.mapconductor.core.ResourceProvider
@@ -21,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 
 class MapLibreMarkerOverlayRenderer(
     holder: MapLibreMapViewHolderInterface,
@@ -33,6 +35,8 @@ class MapLibreMarkerOverlayRenderer(
         coroutine = coroutine,
     ) {
     private val iconRefCounter: MutableMap<String, Int> = mutableMapOf()
+    private val pendingStyleImageRemovals: MutableMap<String, Long> = mutableMapOf()
+    private val iconBitmapCache: MutableMap<String, Bitmap> = mutableMapOf()
     private val defaultMarkerIcon: BitmapIcon = DefaultMarkerIcon().toBitmapIcon()
 
     object Prop {
@@ -70,15 +74,47 @@ class MapLibreMarkerOverlayRenderer(
         }
     }
 
-    // Ensure default icon exists on the given style (used after style reload)
+    // Ensure marker images exist on the given style (used after style reload).
     fun ensureDefaultIcon(style: org.maplibre.android.maps.Style) {
+        ensureStyleImages(style)
+    }
+
+    fun ensureStyleImages(style: org.maplibre.android.maps.Style) {
         try {
-            if (style.getImage(Prop.DEFAULT_MARKER_ID) == null) {
-                style.addImage(Prop.DEFAULT_MARKER_ID, defaultMarkerIcon.bitmap)
-            }
-        } catch (e: Exception) {
-            android.util.Log.w("MapLibre", "Failed ensuring default icon on style: ${e.message}")
+            style.addImage(Prop.DEFAULT_MARKER_ID, defaultMarkerIcon.bitmap)
+        } catch (_: Exception) {
         }
+
+        markerManager.allEntities().forEach { entity ->
+            entity.state.icon?.let { icon ->
+                val iconKey = icon.hashCode().toString()
+                val bitmap = iconBitmapCache[iconKey] ?: icon.toBitmapIcon().bitmap
+                try {
+                    style.addImage(iconKey, bitmap, false)
+                } catch (_: Exception) {
+                }
+                iconBitmapCache[iconKey] = bitmap
+            }
+        }
+    }
+
+    private fun decrementIconRef(iconKey: String) {
+        if (iconKey == Prop.DEFAULT_MARKER_ID) return
+        val next = (iconRefCounter[iconKey] ?: 0) - 1
+        if (next <= 0) {
+            iconRefCounter.remove(iconKey)
+            // MapLibre can render one frame behind GeoJSON source updates during marker animation.
+            // Keep images briefly after last use so icon-image references never point at a missing image.
+            pendingStyleImageRemovals[iconKey] = System.currentTimeMillis() + STYLE_IMAGE_REMOVAL_GRACE_MS
+        } else {
+            iconRefCounter[iconKey] = next
+        }
+    }
+
+    private fun incrementIconRef(iconKey: String) {
+        if (iconKey == Prop.DEFAULT_MARKER_ID) return
+        pendingStyleImageRemovals.remove(iconKey)
+        iconRefCounter[iconKey] = (iconRefCounter[iconKey] ?: 0) + 1
     }
 
     override fun setMarkerPosition(
@@ -87,9 +123,16 @@ class MapLibreMarkerOverlayRenderer(
     ) {
         val entities = markerManager.allEntities()
         val props = (markerEntity.marker?.properties() ?: JsonObject()).deepCopy()
+        val previousZIndex =
+            props
+                .get(Prop.Z_INDEX)
+                ?.takeIf { it.isJsonPrimitive && it.asJsonPrimitive.isNumber }
+                ?.asInt
         props.addProperty(
             Prop.Z_INDEX,
-            markerEntity.state.zIndex ?: calculateZIndex(position),
+            markerEntity.state.zIndex
+                ?: previousZIndex
+                ?: calculateZIndex(position),
         )
         val feature =
             Feature.fromGeometry(
@@ -115,30 +158,26 @@ class MapLibreMarkerOverlayRenderer(
 
     override suspend fun onAdd(
         data: List<MarkerOverlayRendererInterface.AddParamsInterface>,
-    ): List<MapLibreActualMarker?> {
-        // Get style from controller to use the same instance
-        val style =
-            holder.getController()?.getStyleInstance() ?: run {
-                holder.map.style
+    ): List<MapLibreActualMarker?> =
+        withContext(Dispatchers.Main) {
+            val style = holder.getController()?.getStyleInstance() ?: holder.map.style
+            if (style == null) {
+                return@withContext emptyList()
             }
 
-        if (style == null) {
-            return emptyList()
-        }
-
-        withContext(Dispatchers.Main) {
             data.forEach {
                 it.state.icon?.let { icon ->
                     val iconKey = icon.hashCode().toString()
-                    if (!iconRefCounter.contains(iconKey)) {
+                    try {
                         style.addImage(iconKey, it.bitmapIcon.bitmap, false)
-                        iconRefCounter[iconKey] = 0
+                    } catch (_: Exception) {
                     }
+                    iconBitmapCache[iconKey] = it.bitmapIcon.bitmap
+                    if (!iconRefCounter.contains(iconKey)) iconRefCounter[iconKey] = 0
                 }
             }
-        }
 
-        return data.map {
+            data.map {
             val featureId = "marker-${it.state.id}"
             val position = GeoPoint.from(it.state.position).toPoint()
             val properties =
@@ -146,7 +185,7 @@ class MapLibreMarkerOverlayRenderer(
                     if (it.state.icon != null) {
                         it.state.icon?.let { icon ->
                             val iconKey = icon.hashCode().toString()
-                            iconRefCounter[iconKey] = iconRefCounter.getOrDefault(iconKey, 0) + 1
+                            incrementIconRef(iconKey)
                             addProperty(Prop.ICON_ID, iconKey)
                             // icon offset property
                             add(Prop.ICON_ANCHOR, createIconOffset(icon))
@@ -174,8 +213,20 @@ class MapLibreMarkerOverlayRenderer(
     private fun createIconOffset(icon: MarkerIconInterface): JsonArray = createIconOffset(icon.toBitmapIcon())
 
     override suspend fun onRemove(data: List<MarkerEntityInterface<MapLibreActualMarker>>) {
-        coroutine.launch {
-//            data.forEach { params -> params.marker?.remove() }
+        withContext(Dispatchers.Main) {
+            data.forEach { entity ->
+                val iconKey =
+                    entity.marker
+                        ?.properties()
+                        ?.get(Prop.ICON_ID)
+                        ?.asString
+                        ?: entity.state.icon
+                            ?.hashCode()
+                            ?.toString()
+                if (iconKey != null) {
+                    decrementIconRef(iconKey)
+                }
+            }
         }
     }
 
@@ -200,15 +251,42 @@ class MapLibreMarkerOverlayRenderer(
     }
 
     override suspend fun onPostProcess() {
-        // For Mapbox, we need to update the layer after add/remove operations
-        // but only redraw when there were actual changes
-        redraw()
+        withContext(Dispatchers.Main) {
+            val style = holder.getController()?.getStyleInstance() ?: holder.map.style ?: return@withContext
+            markerLayer.draw(markerManager.allEntities(), style)
+            yield()
+
+            val now = System.currentTimeMillis()
+            val expired =
+                pendingStyleImageRemovals
+                    .asSequence()
+                    .filter { (_, deadline) -> deadline <= now }
+                    .map { (key, _) -> key }
+                    .toList()
+
+            expired.forEach { iconKey ->
+                if (iconRefCounter.containsKey(iconKey)) {
+                    pendingStyleImageRemovals.remove(iconKey)
+                    return@forEach
+                }
+                try {
+                    style.removeImage(iconKey)
+                } catch (_: Exception) {
+                } finally {
+                    pendingStyleImageRemovals.remove(iconKey)
+                    iconBitmapCache.remove(iconKey)
+                }
+            }
+        }
     }
 
     override suspend fun onChange(
         data: List<MarkerOverlayRendererInterface.ChangeParamsInterface<MapLibreActualMarker>>,
     ): List<MapLibreActualMarker?> =
-        data.map { params ->
+        withContext(Dispatchers.Main) {
+            val style = holder.getController()?.getStyleInstance() ?: holder.map.style
+
+            data.map { params ->
             val prevFinger = params.prev.fingerPrint
             val currFinger = params.current.fingerPrint
             val prevProperties = params.prev.marker?.properties()
@@ -229,14 +307,15 @@ class MapLibreMarkerOverlayRenderer(
                             prevProperties?.get(Prop.ICON_ANCHOR) ?: getDefaultIconOffsetProperty(),
                         )
                     } else {
-                        val iconKey = prevFinger.icon.toString()
-                        val cnt = iconRefCounter.getOrDefault(iconKey, 1) - 1
-                        if (cnt == 0) {
-                            iconRefCounter.remove(iconKey)
-                            coroutine.launch { holder.map.style?.removeImage(iconKey) }
-                        } else {
-                            iconRefCounter[iconKey] = cnt
-                        }
+                        val prevIconKey =
+                            prevProperties
+                                ?.get(Prop.ICON_ID)
+                                ?.asString
+                                ?: params.prev.state.icon
+                                    ?.hashCode()
+                                    ?.toString()
+                                ?: Prop.DEFAULT_MARKER_ID
+                        decrementIconRef(prevIconKey)
 
                         if (currFinger.icon == null) {
                             addProperty(Prop.ICON_ID, Prop.DEFAULT_MARKER_ID)
@@ -245,14 +324,13 @@ class MapLibreMarkerOverlayRenderer(
                             params.current.state.icon?.let { icon ->
                                 // icon id
                                 val iconKey = icon.hashCode().toString()
-                                if (iconRefCounter.contains(iconKey)) {
-                                    iconRefCounter[iconKey] = (iconRefCounter[iconKey] ?: 0) + 1
-                                } else {
-                                    coroutine.launch {
-                                        holder.map.style?.addImage(iconKey, params.bitmapIcon.bitmap, false)
-                                    }
-                                    iconRefCounter[iconKey] = 1
+                                try {
+                                    style?.addImage(iconKey, params.bitmapIcon.bitmap, false)
+                                } catch (_: Exception) {
                                 }
+                                iconBitmapCache[iconKey] = params.bitmapIcon.bitmap
+                                if (!iconRefCounter.contains(iconKey)) iconRefCounter[iconKey] = 0
+                                incrementIconRef(iconKey)
                                 addProperty(Prop.ICON_ID, iconKey)
                                 add(Prop.ICON_ANCHOR, createIconOffset(icon))
                             }
@@ -260,7 +338,11 @@ class MapLibreMarkerOverlayRenderer(
                     }
                     addProperty(
                         Prop.Z_INDEX,
-                        params.current.state.zIndex ?: calculateZIndex(params.current.state.position),
+                        resolveZIndexForChange(
+                            current = params.current,
+                            prev = params.prev,
+                            prevProperties = prevProperties,
+                        ),
                     )
                 }
 
@@ -269,4 +351,25 @@ class MapLibreMarkerOverlayRenderer(
             val featureId = "marker-${params.current.state.id}"
             Feature.fromGeometry(position, properties, featureId)
         }
+    }
+
+    private fun resolveZIndexForChange(
+        current: MarkerEntityInterface<MapLibreActualMarker>,
+        prev: MarkerEntityInterface<MapLibreActualMarker>,
+        prevProperties: JsonObject?,
+    ): Int {
+        current.state.zIndex?.let { return it }
+
+        if (current.fingerPrint.zIndex == prev.fingerPrint.zIndex) {
+            prevProperties
+                ?.get(Prop.Z_INDEX)
+                ?.takeIf { it.isJsonPrimitive && it.asJsonPrimitive.isNumber }
+                ?.asInt
+                ?.let { return it }
+        }
+
+        return calculateZIndex(current.state.position)
+    }
 }
+
+private const val STYLE_IMAGE_REMOVAL_GRACE_MS: Long = 1500L
