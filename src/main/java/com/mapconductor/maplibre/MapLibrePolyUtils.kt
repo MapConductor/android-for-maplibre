@@ -1,7 +1,6 @@
 package com.mapconductor.maplibre
 
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.Dp
+import android.graphics.Color
 import com.google.gson.JsonObject
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoPointInterface
@@ -19,8 +18,8 @@ internal fun createMapLibreLines(
     id: String,
     points: List<GeoPointInterface>,
     geodesic: Boolean,
-    strokeColor: Color,
-    strokeWidth: Dp,
+    strokeColor: Int,
+    strokeWidth: Float,
     zIndex: Int = 0,
 ): List<Feature> {
     val geoPoints: List<GeoPointInterface> =
@@ -37,7 +36,7 @@ internal fun createMapLibreLines(
             LineString.fromLngLats(pts),
             JsonObject().apply {
                 addProperty(MapLibrePolylineLayer.Prop.STROKE_COLOR, strokeColor.toMapLibreColorString())
-                addProperty(MapLibrePolylineLayer.Prop.STROKE_WIDTH, strokeWidth.value)
+                addProperty(MapLibrePolylineLayer.Prop.STROKE_WIDTH, strokeWidth)
                 addProperty("zIndex", zIndex)
                 addProperty("id", fid)
             },
@@ -46,11 +45,11 @@ internal fun createMapLibreLines(
     }
 }
 
-fun Color.toMapLibreColorString(): String {
-    val red = (this.red * 255).toInt()
-    val green = (this.green * 255).toInt()
-    val blue = (this.blue * 255).toInt()
-    val alpha = this.alpha
+fun Int.toMapLibreColorString(): String {
+    val red = Color.red(this)
+    val green = Color.green(this)
+    val blue = Color.blue(this)
+    val alpha = Color.alpha(this) / 255.0
     return "rgba($red, $green, $blue, $alpha)"
 }
 
@@ -59,7 +58,7 @@ internal fun createMapLibrePolygons(
     points: List<GeoPointInterface>,
     holes: List<List<GeoPointInterface>> = emptyList(),
     geodesic: Boolean,
-    fillColor: Color,
+    fillColor: Int,
     zIndex: Int,
 ): List<Feature> {
     val geoPoints: List<GeoPointInterface> =

@@ -34,7 +34,7 @@ class MapLibreCircleOverlayRenderer(
                 addProperty(MapLibreCircleLayer.Prop.RADIUS, state.radiusMeters)
                 addProperty(MapLibreCircleLayer.Prop.FILL_COLOR, state.fillColor.toMapLibreColorString())
                 addProperty(MapLibreCircleLayer.Prop.STROKE_COLOR, state.strokeColor.toMapLibreColorString())
-                addProperty(MapLibreCircleLayer.Prop.STROKE_WIDTH, state.strokeWidth.value)
+                addProperty(MapLibreCircleLayer.Prop.STROKE_WIDTH, state.strokeWidth)
                 addProperty(MapLibreCircleLayer.Prop.Z_INDEX, state.zIndex ?: calculateZIndex(state.center))
             },
             "circle-${state.id}",
@@ -56,7 +56,7 @@ class MapLibreCircleOverlayRenderer(
                 addProperty(MapLibreCircleLayer.Prop.RADIUS, state.radiusMeters)
                 addProperty(MapLibreCircleLayer.Prop.FILL_COLOR, state.fillColor.toMapLibreColorString())
                 addProperty(MapLibreCircleLayer.Prop.STROKE_COLOR, state.strokeColor.toMapLibreColorString())
-                addProperty(MapLibreCircleLayer.Prop.STROKE_WIDTH, state.strokeWidth.value)
+                addProperty(MapLibreCircleLayer.Prop.STROKE_WIDTH, state.strokeWidth)
                 addProperty(MapLibreCircleLayer.Prop.Z_INDEX, state.zIndex ?: calculateZIndex(state.center))
             },
             "circle-${state.id}",
