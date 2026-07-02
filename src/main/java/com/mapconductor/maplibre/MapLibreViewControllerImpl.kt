@@ -1,6 +1,6 @@
 package com.mapconductor.maplibre
 
-import android.graphics.PointF
+import androidx.compose.ui.geometry.Offset
 import com.mapconductor.core.circle.CircleEvent
 import com.mapconductor.core.circle.CircleState
 import com.mapconductor.core.circle.OnCircleEventHandler
@@ -52,6 +52,7 @@ import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.sources.GeoJsonSource
 import java.util.UUID
+import android.graphics.PointF
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
@@ -548,7 +549,7 @@ class MapLibreViewController(
         controller.getSelectedMarker()?.let { entity ->
 
             val screenCoordinate =
-                PointF(
+                Offset(
                     detector.focalPoint.x,
                     detector.focalPoint.y,
                 )
@@ -598,7 +599,7 @@ class MapLibreViewController(
                 val selected = controller.getSelectedMarker() ?: return@OnTouchListener false
                 when (event.actionMasked) {
                     MotionEvent.ACTION_MOVE -> {
-                        val pos = holder.fromScreenOffsetSync(PointF(event.x, event.y))
+                        val pos = holder.fromScreenOffsetSync(Offset(event.x, event.y))
                         if (pos != null) {
                             selected.state.position = pos
                             controller.renderer.dragLayer.updatePosition(pos)
@@ -663,19 +664,19 @@ class MapLibreViewController(
         val mapHeight = holder.mapView.height.toFloat()
         val nearLeft =
             holder.fromScreenOffsetSync(
-                PointF(0.0f, mapHeight),
+                Offset(0.0f, mapHeight),
             ) ?: return null
         val nearRight =
             holder.fromScreenOffsetSync(
-                PointF(mapWidth, mapHeight),
+                Offset(mapWidth, mapHeight),
             ) ?: return null
         val farLeft =
             holder.fromScreenOffsetSync(
-                PointF(0.0f, 0.0f),
+                Offset(0.0f, 0.0f),
             ) ?: return null
         val farRight =
             holder.fromScreenOffsetSync(
-                PointF(mapWidth, 0.0f),
+                Offset(mapWidth, 0.0f),
             ) ?: return null
 
         val bounds = GeoRectBounds()

@@ -5,9 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import com.mapconductor.compose.map.MapViewBase
 import com.mapconductor.core.circle.CircleManager
 import com.mapconductor.core.map.MapCameraPositionInterface
-import com.mapconductor.compose.MapViewBase
 import com.mapconductor.core.map.MutableMapServiceRegistry
 import com.mapconductor.core.map.OnCameraMoveHandler
 import com.mapconductor.core.map.OnMapEventHandler
@@ -95,9 +95,8 @@ fun MapLibreMapView(
                     map.setStyle(state.mapDesignType.styleJsonURL) {
                         // Resume only after style is fully loaded
                         continuation.resume(
-                            MapLibreMapViewHolder(mapView, map),
-                            onCancellation = {},
-                        )
+                            MapLibreMapViewHolder(mapView, map)
+                        ) { cause, _, _ -> }
                     }
                 }
             }

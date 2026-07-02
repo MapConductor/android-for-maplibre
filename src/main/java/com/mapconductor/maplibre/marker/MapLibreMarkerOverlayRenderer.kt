@@ -1,6 +1,5 @@
 package com.mapconductor.maplibre.marker
 
-import android.graphics.Bitmap
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.mapconductor.core.ResourceProvider
@@ -18,6 +17,7 @@ import com.mapconductor.maplibre.MapLibreMapViewHolderInterface
 import com.mapconductor.maplibre.toPoint
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
+import android.graphics.Bitmap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

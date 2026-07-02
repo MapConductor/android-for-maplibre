@@ -32,9 +32,9 @@ class MapLibreMarkerController(
     override val renderer: MapLibreMarkerOverlayRenderer,
     private val markerTiling: MarkerTilingOptions = MarkerTilingOptions.Default,
 ) : AbstractMarkerController<MapLibreActualMarker>(
-        markerManager = renderer.markerManager,
-        renderer = renderer,
-    ) {
+    markerManager = renderer.markerManager,
+    renderer = renderer,
+) {
     private var internalSelectedMarker: MarkerEntityInterface<MapLibreActualMarker>? = null
 
     private val defaultMarkerIcon: BitmapIcon = DefaultMarkerIcon().toBitmapIcon()
@@ -84,7 +84,7 @@ class MapLibreMarkerController(
         val markerScreen = renderer.holder.toScreenOffset(nearest.state.position) ?: return null
 
         val tolerancePx =
-            Settings.Default.tapTolerance
+            Settings.Default.tapTolerance.value
                 .toDouble() *
                 ResourceProvider.getDensity().toDouble()
 
