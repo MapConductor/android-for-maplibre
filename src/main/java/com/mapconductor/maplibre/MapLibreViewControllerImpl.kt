@@ -1,6 +1,7 @@
 package com.mapconductor.maplibre
 
 import androidx.compose.ui.geometry.Offset
+import com.mapconductor.core.OnMapInitializedHandler
 import com.mapconductor.core.circle.CircleEvent
 import com.mapconductor.core.circle.CircleState
 import com.mapconductor.core.circle.OnCircleEventHandler
@@ -11,7 +12,6 @@ import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
-import com.mapconductor.core.map.OnMapInitializedHandler
 import com.mapconductor.core.map.VisibleRegion
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
