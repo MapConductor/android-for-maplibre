@@ -115,7 +115,6 @@ fun MapLibreMapView(
             val polygonController =
                 getPolygonController(
                     holder = holder,
-                    rasterLayerController = rasterLayerController,
                 )
             val groundImageController = getGroundImageController(holder)
             val circleController = getCircleController(holder)
@@ -253,7 +252,6 @@ internal fun getPolylineController(holder: MapLibreMapViewHolderInterface): MapL
 
 internal fun getPolygonController(
     holder: MapLibreMapViewHolderInterface,
-    rasterLayerController: MapLibreRasterLayerController,
 ): MapLibrePolygonConductor {
     val polylineLayer =
         MapLibrePolylineLayer(
@@ -279,7 +277,6 @@ internal fun getPolygonController(
             layer = polygonLayer,
             polygonManager = polygonManager,
             holder = holder,
-            rasterLayerController = rasterLayerController,
         )
 
     return MapLibrePolygonConductor(
