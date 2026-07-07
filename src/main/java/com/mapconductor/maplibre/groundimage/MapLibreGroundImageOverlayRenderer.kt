@@ -1,17 +1,24 @@
 package com.mapconductor.maplibre.groundimage
 
+import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.groundimage.AbstractGroundImageOverlayRenderer
 import com.mapconductor.core.groundimage.GroundImageEntityInterface
+import com.mapconductor.core.groundimage.GroundImageFingerPrint
 import com.mapconductor.core.groundimage.GroundImageState
-import com.mapconductor.core.groundimage.GroundImageTileProvider
-import com.mapconductor.core.tileserver.LocalTileServer
 import com.mapconductor.maplibre.MapLibreActualGroundImage
 import com.mapconductor.maplibre.MapLibreMapViewHolderInterface
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.geometry.LatLngQuad
+import org.maplibre.android.maps.Style
 import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.RasterLayer
-import org.maplibre.android.style.sources.RasterSource as MapLibreRasterSource
-import org.maplibre.android.style.sources.TileSet
+import org.maplibre.android.style.sources.ImageSource
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Rect
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,32 +27,21 @@ import kotlinx.coroutines.withContext
 
 class MapLibreGroundImageOverlayRenderer(
     override val holder: MapLibreMapViewHolderInterface,
-    private val tileServer: LocalTileServer,
     override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : AbstractGroundImageOverlayRenderer<MapLibreActualGroundImage>() {
     override suspend fun createGroundImage(state: GroundImageState): MapLibreActualGroundImage? =
         withContext(coroutine.coroutineContext) {
             val style = holder.map.style ?: return@withContext null
-            val routeId = buildSafeRouteId(state.id)
-            val provider = GroundImageTileProvider(tileSize = state.tileSize)
-            provider.update(state, opacity = 1.0f)
-            tileServer.register(routeId, provider)
-
-            val sourceId = "groundimage-source-$routeId"
-            val layerId = "groundimage-layer-$routeId"
-            val cacheKey = tileCacheKey(state)
+            val coordinates = state.bounds.toLatLngQuad() ?: return@withContext null
             val handle =
                 MapLibreGroundImageHandle(
-                    routeId = routeId,
-                    generation = 0L,
-                    cacheKey = cacheKey,
-                    sourceId = sourceId,
-                    layerId = layerId,
-                    tileProvider = provider,
+                    sourceId = sourceId(state.id),
+                    layerId = layerId(state.id),
+                    applied = state.fingerPrint().toAppliedGroundImage(),
                 )
 
-            removeSourceAndLayerIfExists(handle)
-            addSourceAndLayer(handle, state)
+            removeSourceAndLayerIfExists(style, handle)
+            addSourceAndLayer(style, handle, state, coordinates)
             handle
         }
 
@@ -56,64 +52,46 @@ class MapLibreGroundImageOverlayRenderer(
     ): MapLibreActualGroundImage? =
         withContext(coroutine.coroutineContext) {
             val style = holder.map.style ?: return@withContext groundImage
+            val source = style.getSourceAs<ImageSource>(groundImage.sourceId)
+            val layer = style.getLayer(groundImage.layerId) as? RasterLayer
+
+            if (source == null || layer == null) {
+                removeSourceAndLayerIfExists(style, groundImage)
+                return@withContext createGroundImage(current.state)
+            }
 
             val finger = current.fingerPrint
-            val prevFinger = prev.fingerPrint
+            val prevFinger = groundImage.applied
+            val coordinates = current.state.bounds.toLatLngQuad() ?: return@withContext groundImage
+
+            if (finger.image != prevFinger.image) {
+                source.setImage(current.state.image.toBitmap())
+                source.setCoordinates(coordinates)
+            } else if (finger.bounds != prevFinger.bounds) {
+                source.setCoordinates(coordinates)
+            }
 
             if (finger.opacity != prevFinger.opacity) {
-                updateLayerOpacity(style, groundImage.layerId, current.state.opacity)
+                updateLayerOpacity(layer, current.state.opacity)
             }
 
-            val tileSizeChanged = finger.tileSize != prevFinger.tileSize
-            val tileContentChanged =
-                finger.bounds != prevFinger.bounds || finger.image != prevFinger.image || tileSizeChanged
-            if (!tileContentChanged) {
-                return@withContext groundImage
-            }
-
-            val provider =
-                if (tileSizeChanged) {
-                    GroundImageTileProvider(tileSize = current.state.tileSize).also {
-                        tileServer.register(groundImage.routeId, it)
-                    }
-                } else {
-                    groundImage.tileProvider
-                }
-            provider.update(current.state, opacity = 1.0f)
-
-            val nextHandle =
-                groundImage.copy(
-                    generation = groundImage.generation + 1L,
-                    cacheKey = tileCacheKey(current.state),
-                    tileProvider = provider,
-                )
-            removeSourceAndLayerIfExists(nextHandle)
-            addSourceAndLayer(nextHandle, current.state)
-            nextHandle
+            groundImage.copy(applied = finger.toAppliedGroundImage())
         }
 
     override suspend fun removeGroundImage(entity: GroundImageEntityInterface<MapLibreActualGroundImage>) {
         coroutine.launch {
             val style = holder.map.style ?: return@launch
-            val handle = entity.groundImage
-            removeSourceAndLayerIfExists(handle)
-            tileServer.unregister(handle.routeId)
+            removeSourceAndLayerIfExists(style, entity.groundImage)
         }
     }
 
     private fun addSourceAndLayer(
+        style: Style,
         handle: MapLibreGroundImageHandle,
         state: GroundImageState,
+        coordinates: LatLngQuad,
     ) {
-        val style = holder.map.style ?: return
-        val tileSet =
-            TileSet("2.2.0", tileServer.urlTemplate(handle.routeId, handle.tileProvider.tileSize, handle.cacheKey))
-                .apply {
-                    scheme = "xyz"
-                    setMinZoom(0f)
-                    setMaxZoom(22f)
-                }
-        val source = MapLibreRasterSource(handle.sourceId, tileSet, handle.tileProvider.tileSize)
+        val source = ImageSource(handle.sourceId, coordinates, state.image.toBitmap())
         val layer = RasterLayer(handle.layerId, handle.sourceId)
         layer.setProperties(
             PropertyFactory.rasterOpacity(state.opacity.coerceIn(0.0f, 1.0f)),
@@ -137,8 +115,10 @@ class MapLibreGroundImageOverlayRenderer(
         }
     }
 
-    private fun removeSourceAndLayerIfExists(handle: MapLibreGroundImageHandle) {
-        val style = holder.map.style ?: return
+    private fun removeSourceAndLayerIfExists(
+        style: Style,
+        handle: MapLibreGroundImageHandle,
+    ) {
         try {
             style.removeLayer(handle.layerId)
         } catch (_: Exception) {
@@ -150,18 +130,46 @@ class MapLibreGroundImageOverlayRenderer(
     }
 
     private fun updateLayerOpacity(
-        style: org.maplibre.android.maps.Style,
-        layerId: String,
+        layer: RasterLayer,
         opacity: Float,
     ) {
-        val layer = style.getLayer(layerId) as? RasterLayer ?: return
         layer.setProperties(PropertyFactory.rasterOpacity(opacity.coerceIn(0.0f, 1.0f)))
     }
 
-    private fun buildSafeRouteId(id: String): String =
-        buildString(id.length + 16) {
-            append("groundimage-")
-            id.forEach { ch ->
+    private fun GeoRectBounds.toLatLngQuad(): LatLngQuad? {
+        val sw = southWest ?: return null
+        val ne = northEast ?: return null
+        return LatLngQuad(
+            LatLng(ne.latitude, sw.longitude),
+            LatLng(ne.latitude, ne.longitude),
+            LatLng(sw.latitude, ne.longitude),
+            LatLng(sw.latitude, sw.longitude),
+        )
+    }
+
+    private fun Drawable.toBitmap(): Bitmap {
+        if (this is BitmapDrawable && bitmap != null) {
+            return bitmap
+        }
+
+        val width = intrinsicWidth.takeIf { it > 0 } ?: 1
+        val height = intrinsicHeight.takeIf { it > 0 } ?: 1
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val oldBounds = Rect(bounds)
+        setBounds(0, 0, canvas.width, canvas.height)
+        draw(canvas)
+        bounds = oldBounds
+        return bitmap
+    }
+
+    private fun sourceId(id: String): String = "mc-gimg-src-${id.toStyleIdPart()}"
+
+    private fun layerId(id: String): String = "mc-gimg-lyr-${id.toStyleIdPart()}"
+
+    private fun String.toStyleIdPart(): String =
+        buildString(length) {
+            this@toStyleIdPart.forEach { ch ->
                 when {
                     ch.isLetterOrDigit() -> append(ch)
                     ch == '-' || ch == '_' -> append(ch)
@@ -170,16 +178,12 @@ class MapLibreGroundImageOverlayRenderer(
             }
         }
 
-    private fun tileCacheKey(state: GroundImageState): String =
-        buildString(64) {
-            append(state.bounds.hashCode())
-            append('-')
-            append(state.image.hashCode())
-            append('-')
-            append(state.tileSize.hashCode())
-            append('-')
-            append(state.extra?.hashCode() ?: 0)
-        }
+    private fun GroundImageFingerPrint.toAppliedGroundImage(): AppliedGroundImage =
+        AppliedGroundImage(
+            bounds = bounds,
+            image = image,
+            opacity = opacity,
+        )
 
     companion object {
         private const val BELOW_LAYER_ID = "polyline-layer"

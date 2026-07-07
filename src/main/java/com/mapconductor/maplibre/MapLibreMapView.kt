@@ -22,7 +22,6 @@ import com.mapconductor.core.marker.MarkerTilingOptions
 import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.polygon.PolygonManager
 import com.mapconductor.core.polyline.PolylineManager
-import com.mapconductor.core.tileserver.TileServerRegistry
 import com.mapconductor.maplibre.circle.MapLibreCircleController
 import com.mapconductor.maplibre.circle.MapLibreCircleLayer
 import com.mapconductor.maplibre.circle.MapLibreCircleOverlayRenderer
@@ -315,11 +314,9 @@ internal fun getRasterLayerController(holder: MapLibreMapViewHolderInterface): M
 }
 
 internal fun getGroundImageController(holder: MapLibreMapViewHolderInterface): MapLibreGroundImageController {
-    val tileServer = TileServerRegistry.get()
     val renderer =
         MapLibreGroundImageOverlayRenderer(
             holder = holder,
-            tileServer = tileServer,
         )
     return MapLibreGroundImageController(renderer = renderer)
 }
