@@ -48,7 +48,7 @@ class MapLibrePolylineLayer(
         val styleSource =
             try {
                 style.getSource(sourceId)
-            } catch (e: IllegalStateException) {
+            } catch (_: IllegalStateException) {
                 // Style might be in transition
                 null
             }

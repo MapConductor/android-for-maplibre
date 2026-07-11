@@ -2,7 +2,6 @@ package com.mapconductor.maplibre.polygon
 
 import com.mapconductor.core.controller.OverlayControllerInterface
 import com.mapconductor.core.features.GeoPointInterface
-import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.polygon.PolygonEntity
 import com.mapconductor.core.polygon.PolygonEntityInterface
 import com.mapconductor.core.polygon.PolygonEvent
@@ -20,6 +19,8 @@ class MapLibrePolygonConductor(
         PolygonEvent,
     > {
     override val zIndex: Int = 2
+
+    var clickListener: ((PolygonEvent) -> Unit)? = null
 
     override suspend fun add(data: List<PolygonState>) {
         val nextIds = data.asSequence().map { it.id }.toSet()
@@ -89,7 +90,6 @@ class MapLibrePolygonConductor(
         clickListener?.invoke(event)
     }
 
-    override var clickListener: ((PolygonEvent) -> Unit)? = null
 
     @Suppress("UNCHECKED_CAST")
     override fun find(position: GeoPointInterface): PolygonEntityInterface<PolygonState>? =
@@ -101,8 +101,6 @@ class MapLibrePolygonConductor(
         polygonOverlay.onPostProcess()
         polylineOverlay.onPostProcess()
     }
-
-    override suspend fun onCameraChanged(mapCameraPosition: MapCameraPosition) {}
 
     override fun destroy() {
         // No native resources to clean up for polygons

@@ -38,7 +38,7 @@ class MapLibrePolylineOverlayRenderer(
         polyline: MapLibreActualPolyline,
         current: PolylineEntityInterface<MapLibreActualPolyline>,
         prev: PolylineEntityInterface<MapLibreActualPolyline>,
-    ): MapLibreActualPolyline? {
+    ): MapLibreActualPolyline {
         // Recreate features to apply updated properties
         return createMapLibreLines(
             id = current.state.id,
@@ -57,9 +57,7 @@ class MapLibrePolylineOverlayRenderer(
 
     override suspend fun onPostProcess() {
         val polylines = getAllPolylineEntities()
-        // Use the same style instance from the controller when available
-        val style = holder.getController()?.getStyleInstance() ?: holder.map.style
-        style?.let {
+        holder.map.style?.let {
             coroutine.launch {
                 layer.draw(polylines, it)
             }
@@ -74,9 +72,7 @@ class MapLibrePolylineOverlayRenderer(
 
     fun redraw() {
         val entities = polylineManager.allEntities()
-        // Get style from controller to use the same instance
-        val style = holder.getController()?.getStyleInstance() ?: holder.map.style
-        style?.let {
+        holder.map.style?.let {
             coroutine.launch {
                 layer.draw(entities, it)
             }

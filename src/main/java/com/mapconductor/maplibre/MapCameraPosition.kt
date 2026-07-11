@@ -75,14 +75,14 @@ internal data class MapLibreCameraStateSnapshot(
 }
 
 internal fun CameraPosition.toMapCameraPosition(logicalTiltHint: Double?): MapCameraPosition {
-    val pitch = tilt ?: 0.0
+    val pitch = tilt
     val pitchAbsDeg = abs(pitch).coerceIn(0.0, 60.0)
 
     if (logicalTiltHint == null || logicalTiltHint >= 0.0 || pitchAbsDeg == 0.0) {
         return MapCameraPosition(
             position = target?.toGeoPoint() ?: GeoPoint.fromLongLat(0.0, 0.0),
             zoom = ZoomAltitudeConverter.maplibreZoomToGoogleZoom(zoom),
-            bearing = bearing ?: 0.0,
+            bearing = bearing,
             tilt = pitch,
             visibleRegion = null,
         )
@@ -91,7 +91,7 @@ internal fun CameraPosition.toMapCameraPosition(logicalTiltHint: Double?): MapCa
     // Recover original position and zoom from shifted camera state (tilt < 0 case)
     val pitchAbsRad = Math.toRadians(pitchAbsDeg)
     val shiftedCenter = target?.toGeoPoint() ?: GeoPoint.fromLongLat(0.0, 0.0)
-    val bear = bearing ?: 0.0
+    val bear = bearing
 
     val googleZoom = ZoomAltitudeConverter.maplibreZoomToGoogleZoom(zoom)
     val originalGoogleZoom = googleZoom - NEGATIVE_TILT_ZOOM_OFFSET_AT_MAX_TILT * (pitchAbsDeg / 60.0)

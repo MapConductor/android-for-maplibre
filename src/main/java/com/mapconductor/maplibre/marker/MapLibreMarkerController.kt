@@ -1,6 +1,7 @@
 package com.mapconductor.maplibre.marker
 
 import com.mapconductor.core.ResourceProvider
+import com.mapconductor.core.controller.OnCameraChangeReceiverInterface
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.map.MapCameraPosition
@@ -22,19 +23,20 @@ import com.mapconductor.core.tileserver.TileServerRegistry
 import com.mapconductor.maplibre.MapLibreActualMarker
 import com.mapconductor.settings.Settings
 import java.util.UUID
-import kotlin.math.floor
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 
 class MapLibreMarkerController(
-    override val renderer: MapLibreMarkerOverlayRenderer,
+    renderer: MapLibreMarkerOverlayRenderer,
     private val markerTiling: MarkerTilingOptions = MarkerTilingOptions.Default,
+    private val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : AbstractMarkerController<MapLibreActualMarker>(
     markerManager = renderer.markerManager,
     renderer = renderer,
-) {
+), OnCameraChangeReceiverInterface {
     private var internalSelectedMarker: MarkerEntityInterface<MapLibreActualMarker>? = null
 
     private val defaultMarkerIcon: BitmapIcon = DefaultMarkerIcon().toBitmapIcon()
@@ -51,25 +53,25 @@ class MapLibreMarkerController(
 
     internal var selectedMarker: MarkerEntityInterface<MapLibreActualMarker>?
         set(value) {
-            if (value == null) {
-                internalSelectedMarker?.let {
-                    renderer.dragLayer.updatePosition(GeoPoint.from(it.state.position))
-                    setDraggingState(it.state, false)
-                    renderer.dragLayer.selected = null
-                    renderer.drawDragLayer()
-                    markerManager.registerEntity(it)
-                    renderer.redraw()
+            (renderer as MapLibreMarkerOverlayRenderer).let { actualRenderer ->
+                if (value == null) {
+                    internalSelectedMarker?.let { selectedMarker ->
+                        actualRenderer.dragLayer.updatePosition(GeoPoint.from(selectedMarker.state.position))
+                        actualRenderer.dragLayer.selected = null
+                        actualRenderer.drawDragLayer()
+                        markerManager.registerEntity(selectedMarker)
+                        actualRenderer.redraw()
+                    }
+                    internalSelectedMarker = null
+                    return
                 }
-                internalSelectedMarker = null
-                return
+                internalSelectedMarker = value
+                markerManager.removeEntity(value.state.id)
+                actualRenderer.dragLayer.selected = value
+                actualRenderer.dragLayer.updatePosition(GeoPoint.from(value.state.position))
+                actualRenderer.redraw()
+                actualRenderer.drawDragLayer()
             }
-            internalSelectedMarker = value
-            markerManager.removeEntity(value.state.id)
-            setDraggingState(value.state, true)
-            renderer.dragLayer.selected = value
-            renderer.dragLayer.updatePosition(GeoPoint.from(value.state.position))
-            renderer.redraw()
-            renderer.drawDragLayer()
         }
         get() = internalSelectedMarker
 
@@ -79,6 +81,7 @@ class MapLibreMarkerController(
 
     override fun find(position: GeoPointInterface): MarkerEntityInterface<MapLibreActualMarker>? {
         val nearest = markerManager.findNearest(position) ?: return null
+        val renderer = renderer as MapLibreMarkerOverlayRenderer
 
         val touchScreen = renderer.holder.toScreenOffset(position) ?: return null
         val markerScreen = renderer.holder.toScreenOffset(nearest.state.position) ?: return null
@@ -90,7 +93,7 @@ class MapLibreMarkerController(
 
         val icon = nearest.state.icon ?: DefaultMarkerIcon()
 
-        val baseSizePx = ResourceProvider.dpToPxForBitmap(icon.iconSize).toDouble()
+        val baseSizePx = ResourceProvider.dpToPxForBitmap(icon.iconSize)
         val iconWidthPx = baseSizePx * icon.scale.toDouble()
         val iconHeightPx = baseSizePx * icon.scale.toDouble()
 
@@ -114,7 +117,6 @@ class MapLibreMarkerController(
 
     override suspend fun add(data: List<MarkerState>) {
         semaphore.withPermit {
-            val currentZoom = currentTileZoom()
             val tilingEnabled =
                 markerTiling.enabled && data.size >= markerManager.minMarkerCount
             val result =
@@ -131,10 +133,10 @@ class MapLibreMarkerController(
                 }
 
             if (result.tiledDataChanged) {
-                syncTiledOverlay(currentZoom)
+                syncTiledOverlay()
             } else if (result.hasTiledMarkers) {
                 if (markerTileRenderer == null || markerTileRasterLayerState == null) {
-                    syncTiledOverlay(currentZoom)
+                    syncTiledOverlay()
                 }
             } else {
                 removeTileOverlay()
@@ -156,7 +158,6 @@ class MapLibreMarkerController(
             val wantsTiled = tilingEnabled && !state.draggable && state.getAnimation() == null
             val wasTiled = tiledMarkerIds.contains(state.id)
             val markerIcon = state.icon?.toBitmapIcon() ?: defaultMarkerIcon
-            val currentZoom = currentTileZoom()
 
             if (wantsTiled) {
                 if (!wasTiled) {
@@ -172,7 +173,7 @@ class MapLibreMarkerController(
                     ),
                 )
                 renderer.onPostProcess()
-                syncTiledOverlay(currentZoom)
+                syncTiledOverlay()
                 return@withPermit
             }
 
@@ -209,7 +210,7 @@ class MapLibreMarkerController(
             renderer.onPostProcess()
 
             if (tiledMarkerIds.isNotEmpty()) {
-                syncTiledOverlay(currentZoom)
+                syncTiledOverlay()
             } else {
                 removeTileOverlay()
             }
@@ -244,7 +245,7 @@ class MapLibreMarkerController(
         markerTileGroupId = null
         markerTileRenderer = null
 
-        renderer.coroutine.launch {
+        coroutine.launch {
             rasterLayerCallback?.onRasterLayerUpdate(null)
         }
         markerTileRasterLayerState = null
@@ -273,9 +274,7 @@ class MapLibreMarkerController(
         rasterLayerCallback?.onRasterLayerUpdate(newState)
     }
 
-    private fun currentTileZoom(): Int = floor(lastCameraPosition.zoom).toInt().coerceAtLeast(0)
-
-    private suspend fun syncTiledOverlay(zoom: Int) {
+    private suspend fun syncTiledOverlay() {
         if (tiledMarkerIds.isEmpty()) {
             removeTileOverlay()
             return
@@ -298,7 +297,7 @@ class MapLibreMarkerController(
             markerTileGroupId = groupId
 
             val tileRenderer =
-                MarkerTileRenderer<MapLibreActualMarker>(
+                MarkerTileRenderer(
                     markerManager = markerManager,
                     tileSize = 256,
                     cacheSizeBytes = markerTiling.cacheSize,

@@ -42,7 +42,7 @@ internal interface MapLibreMarkerEventControllerInterface : MarkerEventControlle
 internal class DefaultMapLibreMarkerEventController(
     private val controller: MapLibreMarkerController,
 ) : MapLibreMarkerEventControllerInterface {
-    override val renderer: MapLibreMarkerOverlayRenderer = controller.renderer
+    override val renderer: MapLibreMarkerOverlayRenderer = controller.renderer as MapLibreMarkerOverlayRenderer
 
     override fun find(position: GeoPointInterface): MarkerEntityInterface<MapLibreActualMarker>? =
         controller

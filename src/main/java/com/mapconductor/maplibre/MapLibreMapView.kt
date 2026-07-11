@@ -95,7 +95,7 @@ fun MapLibreMapView(
                         // Resume only after style is fully loaded
                         continuation.resume(
                             MapLibreMapViewHolder(mapView, map)
-                        ) { cause, _, _ -> }
+                        ) { _, _, _ -> }
                     }
                 }
             }
@@ -157,7 +157,6 @@ fun MapLibreMapView(
                 )
 
                 // Store controller reference in holder
-                holder.setController(mapController)
                 mapController.setCameraMoveStartListener {
                     cameraState.value = it
                     state.updateCameraPosition(it)

@@ -69,8 +69,7 @@ class MapLibreCircleOverlayRenderer(
 
     override suspend fun onPostProcess() {
         val circles = circleManager.allEntities()
-        val style = holder.getController()?.getStyleInstance() ?: holder.map.style
-        style?.let { s ->
+        holder.map.style?.let { s ->
             coroutine.launch { layer.draw(circles, s) }
         }
     }

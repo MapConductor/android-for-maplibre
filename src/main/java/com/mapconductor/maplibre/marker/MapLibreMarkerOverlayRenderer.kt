@@ -160,10 +160,7 @@ class MapLibreMarkerOverlayRenderer(
         data: List<MarkerOverlayRendererInterface.AddParamsInterface>,
     ): List<MapLibreActualMarker?> =
         withContext(Dispatchers.Main) {
-            val style = holder.getController()?.getStyleInstance() ?: holder.map.style
-            if (style == null) {
-                return@withContext emptyList()
-            }
+            val style = holder.map.style ?: return@withContext emptyList()
 
             data.forEach {
                 it.state.icon?.let { icon ->
@@ -231,10 +228,9 @@ class MapLibreMarkerOverlayRenderer(
     }
 
     fun drawDragLayer() {
-        coroutine.launch {
-            val style = holder.getController()?.getStyleInstance() ?: holder.map.style
-            if (style != null) {
-                dragLayer.draw(style)
+        holder.map.style?.let {
+            coroutine.launch {
+                dragLayer.draw(it)
             }
         }
     }
@@ -242,17 +238,16 @@ class MapLibreMarkerOverlayRenderer(
     fun redraw() {
         val entities = markerManager.allEntities()
         // Get style from controller to use the same instance
-        val style = holder.getController()?.getStyleInstance() ?: holder.map.style
-        style?.let { s ->
+        holder.map.style?.let {
             coroutine.launch {
-                markerLayer.draw(entities, s)
+                markerLayer.draw(entities, it)
             }
         }
     }
 
     override suspend fun onPostProcess() {
         withContext(Dispatchers.Main) {
-            val style = holder.getController()?.getStyleInstance() ?: holder.map.style ?: return@withContext
+            val style = holder.map.style ?: return@withContext
             markerLayer.draw(markerManager.allEntities(), style)
             yield()
 
@@ -284,74 +279,71 @@ class MapLibreMarkerOverlayRenderer(
         data: List<MarkerOverlayRendererInterface.ChangeParamsInterface<MapLibreActualMarker>>,
     ): List<MapLibreActualMarker?> =
         withContext(Dispatchers.Main) {
-            val style = holder.getController()?.getStyleInstance() ?: holder.map.style
+            val style = holder.map.style ?: return@withContext emptyList()
 
             data.map { params ->
-            val prevFinger = params.prev.fingerPrint
-            val currFinger = params.current.fingerPrint
-            val prevProperties = params.prev.marker?.properties()
+                val prevFinger = params.prev.fingerPrint
+                val currFinger = params.current.fingerPrint
+                val prevProperties = params.prev.marker?.properties()
 
-            val properties =
-                JsonObject().apply {
-                    // No additional scaling needed - bitmap is created with device density
-                    // and Bitmap.density is set to prevent MapLibre's automatic scaling
-                    // addProperty(Prop.SCALE, 1.0)
-                    if (currFinger.icon == prevFinger.icon) {
-                        addProperty(
-                            Prop.ICON_ID,
-                            prevProperties?.get(Prop.ICON_ID)?.asString ?: Prop.DEFAULT_MARKER_ID,
-                        )
+                val properties =
+                    JsonObject().apply {
+                        // No additional scaling needed - bitmap is created with device density
+                        // and Bitmap.density is set to prevent MapLibre's automatic scaling
+                        // addProperty(Prop.SCALE, 1.0)
+                        if (currFinger.icon == prevFinger.icon) {
+                            addProperty(
+                                Prop.ICON_ID,
+                                prevProperties?.get(Prop.ICON_ID)?.asString ?: Prop.DEFAULT_MARKER_ID,
+                            )
 
-                        add(
-                            Prop.ICON_ANCHOR,
-                            prevProperties?.get(Prop.ICON_ANCHOR) ?: getDefaultIconOffsetProperty(),
-                        )
-                    } else {
-                        val prevIconKey =
-                            prevProperties
-                                ?.get(Prop.ICON_ID)
-                                ?.asString
-                                ?: params.prev.state.icon
-                                    ?.hashCode()
-                                    ?.toString()
-                                ?: Prop.DEFAULT_MARKER_ID
-                        decrementIconRef(prevIconKey)
-
-                        if (currFinger.icon == null) {
-                            addProperty(Prop.ICON_ID, Prop.DEFAULT_MARKER_ID)
-                            add(Prop.ICON_ANCHOR, getDefaultIconOffsetProperty())
+                            add(
+                                Prop.ICON_ANCHOR,
+                                prevProperties?.get(Prop.ICON_ANCHOR) ?: getDefaultIconOffsetProperty(),
+                            )
                         } else {
-                            params.current.state.icon?.let { icon ->
-                                // icon id
-                                val iconKey = icon.hashCode().toString()
-                                try {
-                                    style?.addImage(iconKey, params.bitmapIcon.bitmap, false)
-                                } catch (_: Exception) {
+                            val prevIconKey =
+                                prevProperties
+                                    ?.get(Prop.ICON_ID)
+                                    ?.asString
+                                    ?: params.prev.state.icon
+                                        ?.hashCode()
+                                        ?.toString()
+                                    ?: Prop.DEFAULT_MARKER_ID
+                            decrementIconRef(prevIconKey)
+
+                            if (currFinger.icon == null) {
+                                addProperty(Prop.ICON_ID, Prop.DEFAULT_MARKER_ID)
+                                add(Prop.ICON_ANCHOR, getDefaultIconOffsetProperty())
+                            } else {
+                                params.current.state.icon?.let { icon ->
+                                    // icon id
+                                    val iconKey = icon.hashCode().toString()
+                                    style.addImage(iconKey, params.bitmapIcon.bitmap, false)
+                                    iconBitmapCache[iconKey] = params.bitmapIcon.bitmap
+                                    if (!iconRefCounter.contains(iconKey)) iconRefCounter[iconKey] = 0
+                                    incrementIconRef(iconKey)
+                                    addProperty(Prop.ICON_ID, iconKey)
+                                    add(Prop.ICON_ANCHOR, createIconOffset(icon))
                                 }
-                                iconBitmapCache[iconKey] = params.bitmapIcon.bitmap
-                                if (!iconRefCounter.contains(iconKey)) iconRefCounter[iconKey] = 0
-                                incrementIconRef(iconKey)
-                                addProperty(Prop.ICON_ID, iconKey)
-                                add(Prop.ICON_ANCHOR, createIconOffset(icon))
                             }
                         }
+                        addProperty(
+                            Prop.Z_INDEX,
+                            resolveZIndexForChange(
+                                current = params.current,
+                                prev = params.prev,
+                                prevProperties = prevProperties,
+                            ),
+                        )
                     }
-                    addProperty(
-                        Prop.Z_INDEX,
-                        resolveZIndexForChange(
-                            current = params.current,
-                            prev = params.prev,
-                            prevProperties = prevProperties,
-                        ),
-                    )
-                }
 
-            val position =
-                GeoPoint.from(params.current.state.position).toPoint()
-            val featureId = "marker-${params.current.state.id}"
-            Feature.fromGeometry(position, properties, featureId)
+                val position =
+                    GeoPoint.from(params.current.state.position).toPoint()
+                val featureId = "marker-${params.current.state.id}"
+                Feature.fromGeometry(position, properties, featureId)
+            }
         }
-    }
 
     private fun resolveZIndexForChange(
         current: MarkerEntityInterface<MapLibreActualMarker>,

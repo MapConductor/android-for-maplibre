@@ -1,7 +1,5 @@
 package com.mapconductor.maplibre.polygon
 
-import androidx.compose.ui.graphics.Color
-import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.polygon.AbstractPolygonOverlayRenderer
 import com.mapconductor.core.polygon.PolygonEntityInterface
 import com.mapconductor.core.polygon.PolygonManagerInterface
@@ -35,11 +33,10 @@ class MapLibrePolygonOverlayRenderer(
 
     override suspend fun onPostProcess() {
         val polygons = getAllPolygonEntities()
-        val style = holder.getController()?.getStyleInstance() ?: holder.map.style
 
-        if (style != null) {
+        holder.map.style?.let {
             coroutine.launch {
-                layer.draw(polygons, style)
+                layer.draw(polygons, it)
             }
         }
     }
@@ -78,6 +75,6 @@ class MapLibrePolygonOverlayRenderer(
         return polygon
     }
 
-    private suspend fun getAllPolygonEntities(): List<PolygonEntityInterface<MapLibreActualPolygon>> =
+    private fun getAllPolygonEntities(): List<PolygonEntityInterface<MapLibreActualPolygon>> =
         polygonManager.allEntities()
 }

@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.mapconductor.compose.map.BaseMapViewSaver
+import com.mapconductor.core.controller.OverlayControllerInterface
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.map.MapCameraPosition
@@ -48,20 +49,18 @@ class MapLibreViewState(
         position: GeoPoint,
         durationMillis: Long?,
     ) {
-        val newPosition =
-            this.cameraPosition?.let { currentPosition ->
-                MapCameraPosition.Companion.from(currentPosition).copy(
-                    position = position,
-                )
-            } ?: MapCameraPosition(
-                position = position,
-            )
+        val newPosition = this.cameraPosition.copy(
+            position = position,
+        )
         this.moveCameraTo(newPosition, durationMillis)
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun getMapViewHolder(): MapLibreMapViewHolderInterface? =
         controller?.holder as? MapLibreMapViewHolderInterface
+
+    override fun getControllers(): List<OverlayControllerInterface<*, *, *>>? =
+        controller?.getControllers()
 
     override fun moveCameraTo(
         cameraPosition: MapCameraPosition,
@@ -138,7 +137,7 @@ fun rememberMapLibreMapViewState(
                 MapLibreViewState(
                     id = stateId,
                     mapDesignType = mapDesign,
-                    cameraPosition = MapCameraPosition.Companion.from(cameraPosition),
+                    cameraPosition = MapCameraPosition.from(cameraPosition),
                 ),
             )
         }

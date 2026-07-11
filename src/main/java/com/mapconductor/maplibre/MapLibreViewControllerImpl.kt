@@ -1,11 +1,11 @@
 package com.mapconductor.maplibre
 
 import androidx.compose.ui.geometry.Offset
-import com.mapconductor.core.OnMapInitializedHandler
 import com.mapconductor.core.circle.CircleEvent
 import com.mapconductor.core.circle.CircleState
 import com.mapconductor.core.circle.OnCircleEventHandler
 import com.mapconductor.core.controller.BaseMapViewController
+import com.mapconductor.core.controller.OverlayControllerInterface
 import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.groundimage.GroundImageEvent
 import com.mapconductor.core.groundimage.GroundImageState
@@ -17,7 +17,6 @@ import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
 import com.mapconductor.core.marker.MarkerRenderingStrategyInterface
 import com.mapconductor.core.marker.MarkerState
-import com.mapconductor.core.marker.MarkerTileRasterLayerCallback
 import com.mapconductor.core.marker.OnMarkerEventHandler
 import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.polygon.OnPolygonEventHandler
@@ -52,6 +51,7 @@ import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.sources.GeoJsonSource
 import java.util.UUID
+import android.annotation.SuppressLint
 import android.graphics.PointF
 import android.util.Log
 import android.view.MotionEvent
@@ -70,8 +70,8 @@ class MapLibreViewController(
     private val groundImageController: MapLibreGroundImageController,
     private val circleController: MapLibreCircleController,
     private val rasterLayerController: MapLibreRasterLayerController,
-    override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
-    val backCoroutine: CoroutineScope = CoroutineScope(Dispatchers.Default),
+    override val mainCoroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
+    override val defaultCoroutine: CoroutineScope = CoroutineScope(Dispatchers.Default),
 ) : BaseMapViewController(),
     MapLibreViewControllerInterface,
     MapLibreMap.OnMapClickListener,
@@ -152,7 +152,7 @@ class MapLibreViewController(
         // val topLayerId = style.layers.lastOrNull()?.id
 
         // Ensure default icon image exists on this style
-        markerController.renderer.ensureDefaultIcon(style)
+        (markerController.renderer as MapLibreMarkerOverlayRenderer).ensureDefaultIcon(style)
 
         // Polygon sources only (layers will be added per zIndex)
         ensureGeoJsonSource(style, polygonController.polylineOverlay.layer.sourceId)
@@ -178,24 +178,24 @@ class MapLibreViewController(
         ensurePolygonZLayers(style)
 
         // Marker - add source and layer at the top
-        ensureGeoJsonSource(style, markerController.renderer.markerLayer.sourceId)
+        ensureGeoJsonSource(style, (markerController.renderer as MapLibreMarkerOverlayRenderer).markerLayer.sourceId)
         addLayerAboveSafely(
             style = style,
-            layer = markerController.renderer.markerLayer.layer,
-            layerId = markerController.renderer.markerLayer.layerId,
+            layer = (markerController.renderer as MapLibreMarkerOverlayRenderer).markerLayer.layer,
+            layerId = (markerController.renderer as MapLibreMarkerOverlayRenderer).markerLayer.layerId,
             aboveId = polylineController.renderer.layer.layerId,
         )
-        markerController.renderer.redraw()
+        (markerController.renderer as MapLibreMarkerOverlayRenderer).redraw()
 
         // Drag layer above marker layer
-        ensureGeoJsonSource(style, markerController.renderer.dragLayer.sourceId)
+        ensureGeoJsonSource(style, (markerController.renderer as MapLibreMarkerOverlayRenderer).dragLayer.sourceId)
         addLayerAboveSafely(
             style = style,
-            layer = markerController.renderer.dragLayer.layer,
-            layerId = markerController.renderer.dragLayer.layerId,
-            aboveId = markerController.renderer.markerLayer.layerId,
+            layer = (markerController.renderer as MapLibreMarkerOverlayRenderer).dragLayer.layer,
+            layerId = (markerController.renderer as MapLibreMarkerOverlayRenderer).dragLayer.layerId,
+            aboveId = (markerController.renderer as MapLibreMarkerOverlayRenderer).markerLayer.layerId,
         )
-        markerController.renderer.redraw()
+        (markerController.renderer as MapLibreMarkerOverlayRenderer).redraw()
 
         markerEventControllers
             .map { it.renderer }
@@ -221,10 +221,10 @@ class MapLibreViewController(
             }
 
         // Force redraw after adding layers
-        markerController.renderer.redraw()
+        (markerController.renderer as MapLibreMarkerOverlayRenderer).redraw()
         polylineController.renderer.redraw()
 //        polygonController.polygonOverlay.onPostProcess()
-        coroutine.launch {
+        mainCoroutine.launch {
             groundImageController.reapplyStyle()
             rasterLayerController.reapplyStyle()
         }
@@ -240,27 +240,25 @@ class MapLibreViewController(
         }
 
         setupListeners()
-        registerController(markerController)
-        registerController(polylineController)
-        registerController(polygonController)
-        registerController(groundImageController)
-        registerController(circleController)
-        registerController(rasterLayerController)
+        registerOverlayController(markerController)
+        registerOverlayController(polylineController)
+        registerOverlayController(polygonController)
+        registerOverlayController(groundImageController)
+        registerOverlayController(circleController)
+        registerOverlayController(rasterLayerController)
         registerMarkerEventController(DefaultMapLibreMarkerEventController(markerController))
 
-        markerController.setRasterLayerCallback(
-            MarkerTileRasterLayerCallback { state ->
-                if (state != null) {
-                    rasterLayerController.upsert(state)
-                } else {
-                    val markerTileLayers =
-                        rasterLayerController.rasterLayerManager
-                            .allEntities()
-                            .filter { it.state.id.startsWith("marker-tile-") }
-                    markerTileLayers.forEach { entity -> rasterLayerController.removeById(entity.state.id) }
-                }
-            },
-        )
+        markerController.setRasterLayerCallback { state ->
+            if (state != null) {
+                rasterLayerController.upsert(state)
+            } else {
+                val markerTileLayers =
+                    rasterLayerController.rasterLayerManager
+                        .allEntities()
+                        .filter { it.state.id.startsWith("marker-tile-") }
+                markerTileLayers.forEach { entity -> rasterLayerController.removeById(entity.state.id) }
+            }
+        }
     }
 
     fun setupListeners() {
@@ -288,7 +286,7 @@ class MapLibreViewController(
 
     override fun moveCamera(position: MapCameraPosition) {
         lastLogicalCameraPosition = position
-        coroutine.launch {
+        mainCoroutine.launch {
             val cameraPos = position.toCameraPosition()
             val cameraUpdate =
                 CameraUpdateFactory
@@ -303,7 +301,7 @@ class MapLibreViewController(
         duration: Long,
     ) {
         lastLogicalCameraPosition = position
-        coroutine.launch {
+        mainCoroutine.launch {
             val cameraPos = position.toCameraPosition()
             val cameraUpdate =
                 CameraUpdateFactory
@@ -319,11 +317,20 @@ class MapLibreViewController(
     ) {
         val latLngBounds = bounds.toLatLngBounds() ?: return
         val cameraUpdate = CameraUpdateFactory.newLatLngBounds(latLngBounds, padding)
-        coroutine.launch {
+        mainCoroutine.launch {
             holder.map.moveCamera(cameraUpdate)
             cameraMoveEndCallback?.invoke(readLogicalCameraPosition())
         }
     }
+
+    override fun getControllers(): List<OverlayControllerInterface<*, *, *>> = listOf(
+        markerController,
+        polylineController,
+        polygonController,
+        circleController,
+        groundImageController,
+        rasterLayerController,
+    )
 
     private fun readLogicalCameraPosition(): MapCameraPosition =
         MapLibreCameraStateSnapshot(
@@ -331,12 +338,10 @@ class MapLibreViewController(
             logicalTiltHint = lastLogicalCameraPosition?.tilt,
         ).toMapCameraPosition()
 
-    private var mapDesignType: MapLibreMapDesignTypeInterface = MapLibreDesign.DemoTiles
-
     private var mapDesignTypeChangeListener: MapLibreDesignTypeChangeHandler? = null
 
     override fun setMapDesignType(value: MapLibreMapDesignTypeInterface) {
-        coroutine.launch {
+        mainCoroutine.launch {
             holder.map.setStyle(value.styleJsonURL) { newStyle ->
                 Log.d("MapLibre", "Style changed to ${value.styleJsonURL}")
                 setupStyle(newStyle)
@@ -457,10 +462,6 @@ class MapLibreViewController(
         this.groundImageController.clickListener = listener
     }
 
-    override fun setMapInitializedListener(listener: OnMapInitializedHandler?) {
-        mapInitializedCallback = listener
-    }
-
     override fun onMapClick(point: LatLng): Boolean {
         val touchPosition = point.toGeoPoint()
 
@@ -489,7 +490,7 @@ class MapLibreViewController(
                     state = hitResult.entity.state,
                     clicked = hitResult.closestPoint,
                 )
-            coroutine.launch {
+            mainCoroutine.launch {
                 polylineController.dispatchClick(event)
             }
             return true
@@ -537,7 +538,7 @@ class MapLibreViewController(
     }
 
     override fun onMoveBegin(detector: MoveGestureDetector) {
-        coroutine.launch {
+        mainCoroutine.launch {
             getMapCameraPosition(readLogicalCameraPosition())?.let { mapCameraPosition ->
                 cameraMoveStartCallback?.invoke(mapCameraPosition)
             }
@@ -590,6 +591,7 @@ class MapLibreViewController(
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun installDragTouchInterceptor() {
         if (dragTouchInterceptor != null) return
         val view = holder.mapView
@@ -631,6 +633,7 @@ class MapLibreViewController(
         view.setOnTouchListener(dragTouchInterceptor)
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun removeDragTouchInterceptor() {
         val view = holder.mapView
         view.setOnTouchListener(null)
@@ -638,9 +641,9 @@ class MapLibreViewController(
     }
 
     override fun onCameraMove() {
-        coroutine.launch {
+        mainCoroutine.launch {
             getMapCameraPosition(readLogicalCameraPosition())?.let { mapCameraPosition ->
-                backCoroutine.launch {
+                defaultCoroutine.launch {
                     notifyMapCameraPosition(mapCameraPosition)
                 }
                 cameraMoveCallback?.invoke(mapCameraPosition)
@@ -649,9 +652,9 @@ class MapLibreViewController(
     }
 
     override fun onCameraIdle() {
-        coroutine.launch {
+        mainCoroutine.launch {
             getMapCameraPosition(readLogicalCameraPosition())?.let { mapCameraPosition ->
-                backCoroutine.launch {
+                defaultCoroutine.launch {
                     notifyMapCameraPosition(mapCameraPosition)
                 }
                 cameraMoveEndCallback?.invoke(mapCameraPosition)
@@ -693,7 +696,7 @@ class MapLibreViewController(
                 farRight = farRight,
             )
         val mapCameraPosition =
-            MapCameraPosition.Companion.from(camera).copy(
+            MapCameraPosition.from(camera).copy(
                 visibleRegion = visibleRegion,
             )
         return mapCameraPosition
@@ -794,7 +797,7 @@ class MapLibreViewController(
 
     // Trigger an initial camera update after the view and style are ready
     fun sendInitialCameraUpdate() {
-        coroutine.launch {
+        mainCoroutine.launch {
             if (!involvedMapInitializedCallback) {
                 involvedMapInitializedCallback = true
                 mapInitializedCallback?.invoke()
@@ -805,7 +808,7 @@ class MapLibreViewController(
 
             val camera = readLogicalCameraPosition()
             getMapCameraPosition(camera)?.let { mapCameraPosition ->
-                backCoroutine.launch { notifyMapCameraPosition(mapCameraPosition) }
+                defaultCoroutine.launch { notifyMapCameraPosition(mapCameraPosition) }
             }
         }
     }
