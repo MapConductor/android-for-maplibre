@@ -59,8 +59,7 @@ class MapLibreViewState(
     override fun getMapViewHolder(): MapLibreMapViewHolderInterface? =
         controller?.holder as? MapLibreMapViewHolderInterface
 
-    override fun getControllers(): List<OverlayControllerInterface<*, *, *>>? =
-        controller?.getControllers()
+    override fun getControllers() = controller?.getControllers()
 
     override fun moveCameraTo(
         cameraPosition: MapCameraPosition,

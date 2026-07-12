@@ -16,7 +16,6 @@ class MapLibrePolygonConductor(
 ) : OverlayControllerInterface<
         PolygonState,
         PolygonEntityInterface<PolygonState>,
-        PolygonEvent,
     > {
     override val zIndex: Int = 2
 
