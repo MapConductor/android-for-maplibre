@@ -1,7 +1,5 @@
 package com.mapconductor.maplibre.marker
 
-import android.os.SystemClock
-import android.util.Log
 import com.mapconductor.core.ResourceProvider
 import com.mapconductor.core.controller.OnCameraChangeReceiverInterface
 import com.mapconductor.core.features.GeoPoint
@@ -29,7 +27,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withPermit
-import kotlinx.coroutines.withContext
 
 class MapLibreMarkerController(
     renderer: MapLibreMarkerOverlayRenderer,
@@ -118,35 +115,21 @@ class MapLibreMarkerController(
     }
 
     override suspend fun add(data: List<MarkerState>) {
-        val startedAt = SystemClock.elapsedRealtime()
-        markerTrace("controller add waiting count=${data.size}")
         semaphore.withPermit {
             val tilingEnabled =
                 markerTiling.enabled && data.size >= markerManager.minMarkerCount
-            markerTrace(
-                "controller add start count=${data.size} tilingEnabled=$tilingEnabled " +
-                    "minMarkerCount=${markerManager.minMarkerCount}",
-            )
             val result =
-                withContext(Dispatchers.Default) {
-                    MarkerIngestionEngine.ingest(
-                        data = data,
-                        markerManager = markerManager,
-                        renderer = renderer,
-                        defaultMarkerIcon = defaultMarkerIcon,
-                        tilingEnabled = tilingEnabled,
-                        tiledMarkerIds = tiledMarkerIds,
-                        shouldTile = { state -> !state.draggable && state.getAnimation() == null },
-                    )
-                }
-
-            markerTrace(
-                "controller ingest complete count=${data.size} tiledChanged=${result.tiledDataChanged} " +
-                    "hasTiled=${result.hasTiledMarkers} elapsedMs=${SystemClock.elapsedRealtime() - startedAt}",
-            )
+                MarkerIngestionEngine.ingest(
+                    data = data,
+                    markerManager = markerManager,
+                    renderer = renderer,
+                    defaultMarkerIcon = defaultMarkerIcon,
+                    tilingEnabled = tilingEnabled,
+                    tiledMarkerIds = tiledMarkerIds,
+                    shouldTile = { state -> !state.draggable && state.getAnimation() == null },
+                )
 
             if (result.tiledDataChanged) {
-                markerTrace("controller sync tiled overlay start")
                 syncTiledOverlay()
             } else if (result.hasTiledMarkers) {
                 if (markerTileRenderer == null || markerTileRasterLayerState == null) {
@@ -155,9 +138,6 @@ class MapLibreMarkerController(
             } else {
                 removeTileOverlay()
             }
-            markerTrace(
-                "controller add end count=${data.size} elapsedMs=${SystemClock.elapsedRealtime() - startedAt}",
-            )
         }
     }
 
@@ -353,12 +333,4 @@ class MapLibreMarkerController(
         rasterLayerCallback?.onRasterLayerUpdate(null)
         markerTileRasterLayerState = null
     }
-}
-
-private fun markerTrace(message: String) {
-    Log.d(
-        "MCMarkerTrace",
-        "[MapLibreSDK][Controller][t=${SystemClock.elapsedRealtime()}]" +
-            "[thread=${Thread.currentThread().name}] $message",
-    )
 }

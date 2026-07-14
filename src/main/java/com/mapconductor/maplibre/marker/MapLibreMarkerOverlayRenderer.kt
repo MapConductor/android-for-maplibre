@@ -19,7 +19,6 @@ import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
 import android.graphics.Bitmap
 import android.os.SystemClock
-import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -112,10 +111,6 @@ class MapLibreMarkerOverlayRenderer(
             }
             iconBitmapCache[iconKey] = bitmap
         }
-        markerTrace(
-            "ensureStyleImages entities=${entities.size} native=$nativeMarkerCount " +
-                "uniqueIcons=${styleIcons.size} elapsedMs=${SystemClock.elapsedRealtime() - startedAt}",
-        )
     }
 
     private fun decrementIconRef(iconKey: String) {
@@ -180,8 +175,6 @@ class MapLibreMarkerOverlayRenderer(
         data: List<MarkerOverlayRendererInterface.AddParamsInterface>,
     ): List<MapLibreActualMarker?> =
         withContext(Dispatchers.Main) {
-            val startedAt = SystemClock.elapsedRealtime()
-            markerTrace("onAdd main start count=${data.size}")
             val style = holder.map.style ?: return@withContext emptyList()
 
             data.forEach {
@@ -218,8 +211,6 @@ class MapLibreMarkerOverlayRenderer(
                     addProperty(Prop.Z_INDEX, it.state.zIndex ?: calculateZIndex(it.state.position))
                 }
             Feature.fromGeometry(position, properties, featureId)
-        }.also {
-            markerTrace("onAdd main end count=${data.size} elapsedMs=${SystemClock.elapsedRealtime() - startedAt}")
         }
     }
 
@@ -234,19 +225,17 @@ class MapLibreMarkerOverlayRenderer(
     private fun createIconOffset(icon: MarkerIconInterface): JsonArray = createIconOffset(icon.toBitmapIcon())
 
     override suspend fun onRemove(data: List<MarkerEntityInterface<MapLibreActualMarker>>) {
-        withContext(Dispatchers.Main) {
-            data.forEach { entity ->
-                val iconKey =
-                    entity.marker
-                        ?.properties()
-                        ?.get(Prop.ICON_ID)
-                        ?.asString
-                        ?: entity.state.icon
-                            ?.hashCode()
-                            ?.toString()
-                if (iconKey != null) {
-                    decrementIconRef(iconKey)
-                }
+        data.forEach { entity ->
+            val iconKey =
+                entity.marker
+                    ?.properties()
+                    ?.get(Prop.ICON_ID)
+                    ?.asString
+                    ?: entity.state.icon
+                        ?.hashCode()
+                        ?.toString()
+            if (iconKey != null) {
+                decrementIconRef(iconKey)
             }
         }
     }
@@ -270,15 +259,21 @@ class MapLibreMarkerOverlayRenderer(
     }
 
     override suspend fun onPostProcess() {
-        withContext(Dispatchers.Main) {
-            val startedAt = SystemClock.elapsedRealtime()
-            markerTrace("postProcess main start entities=${markerManager.allEntities().size}")
+        val target = markerManager.allEntities().filter { !it.tiling }
+
+        // withContext(Dispatchers.Main) below is a real cross-thread hop when onPostProcess()
+        // is invoked from a background ingest dispatcher (as the React Native wrapper does for
+        // large marker batches) rather than already running on Main (as the native Compose
+        // sample does). That hop, immediately following a large tiled-marker ingest, lines up
+        // with severe GC stalls on-device even though the Main-side work below is a few ms at
+        // most - so skip the hop entirely when there's nothing for it to do.
+        if (markerLayer.wouldSkipDraw(target) && pendingStyleImageRemovals.isEmpty()) {
+            return
+        }
+
+        return withContext(Dispatchers.Main) {
             val style = holder.map.style ?: return@withContext
-            markerLayer.draw(markerManager.allEntities(), style)
-            markerTrace(
-                "markerLayer draw end entities=${markerManager.allEntities().size} " +
-                    "elapsedMs=${SystemClock.elapsedRealtime() - startedAt}",
-            )
+            markerLayer.draw(target, style)
             yield()
 
             val now = System.currentTimeMillis()
@@ -302,16 +297,7 @@ class MapLibreMarkerOverlayRenderer(
                     iconBitmapCache.remove(iconKey)
                 }
             }
-            markerTrace("postProcess main end elapsedMs=${SystemClock.elapsedRealtime() - startedAt}")
         }
-    }
-
-    private fun markerTrace(message: String) {
-        Log.d(
-            "MCMarkerTrace",
-            "[MapLibreSDK][Renderer][t=${SystemClock.elapsedRealtime()}]" +
-                "[thread=${Thread.currentThread().name}] $message",
-        )
     }
 
     override suspend fun onChange(
