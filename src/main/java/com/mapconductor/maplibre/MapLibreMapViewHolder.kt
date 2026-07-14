@@ -10,7 +10,7 @@ import android.graphics.PointF
 
 interface MapLibreMapViewHolderInterface : MapViewHolderInterface<MapView, MapLibreMap> {}
 
-internal class MapLibreMapViewHolder(
+class MapLibreMapViewHolder(
     override val mapView: MapView,
     override val map: MapLibreMap,
 ) : MapLibreMapViewHolderInterface {

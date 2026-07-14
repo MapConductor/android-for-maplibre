@@ -1,5 +1,7 @@
 package com.mapconductor.maplibre.marker
 
+import android.os.SystemClock
+import android.util.Log
 import com.mapconductor.core.ResourceProvider
 import com.mapconductor.core.controller.OnCameraChangeReceiverInterface
 import com.mapconductor.core.features.GeoPoint
@@ -116,9 +118,15 @@ class MapLibreMarkerController(
     }
 
     override suspend fun add(data: List<MarkerState>) {
+        val startedAt = SystemClock.elapsedRealtime()
+        markerTrace("controller add waiting count=${data.size}")
         semaphore.withPermit {
             val tilingEnabled =
                 markerTiling.enabled && data.size >= markerManager.minMarkerCount
+            markerTrace(
+                "controller add start count=${data.size} tilingEnabled=$tilingEnabled " +
+                    "minMarkerCount=${markerManager.minMarkerCount}",
+            )
             val result =
                 withContext(Dispatchers.Default) {
                     MarkerIngestionEngine.ingest(
@@ -132,7 +140,13 @@ class MapLibreMarkerController(
                     )
                 }
 
+            markerTrace(
+                "controller ingest complete count=${data.size} tiledChanged=${result.tiledDataChanged} " +
+                    "hasTiled=${result.hasTiledMarkers} elapsedMs=${SystemClock.elapsedRealtime() - startedAt}",
+            )
+
             if (result.tiledDataChanged) {
+                markerTrace("controller sync tiled overlay start")
                 syncTiledOverlay()
             } else if (result.hasTiledMarkers) {
                 if (markerTileRenderer == null || markerTileRasterLayerState == null) {
@@ -141,6 +155,9 @@ class MapLibreMarkerController(
             } else {
                 removeTileOverlay()
             }
+            markerTrace(
+                "controller add end count=${data.size} elapsedMs=${SystemClock.elapsedRealtime() - startedAt}",
+            )
         }
     }
 
@@ -336,4 +353,12 @@ class MapLibreMarkerController(
         rasterLayerCallback?.onRasterLayerUpdate(null)
         markerTileRasterLayerState = null
     }
+}
+
+private fun markerTrace(message: String) {
+    Log.d(
+        "MCMarkerTrace",
+        "[MapLibreSDK][Controller][t=${SystemClock.elapsedRealtime()}]" +
+            "[thread=${Thread.currentThread().name}] $message",
+    )
 }
