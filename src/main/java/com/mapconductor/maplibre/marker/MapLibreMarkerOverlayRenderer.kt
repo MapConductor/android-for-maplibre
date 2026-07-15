@@ -35,6 +35,8 @@ class MapLibreMarkerOverlayRenderer(
         holder = holder,
         coroutine = coroutine,
     ) {
+    override val supportsAnimationOverlay: Boolean = true
+
     private val iconRefCounter: MutableMap<String, Int> = mutableMapOf()
     private val pendingStyleImageRemovals: MutableMap<String, Long> = mutableMapOf()
     private val iconBitmapCache: MutableMap<String, Bitmap> = mutableMapOf()
@@ -130,6 +132,14 @@ class MapLibreMarkerOverlayRenderer(
         if (iconKey == Prop.DEFAULT_MARKER_ID) return
         pendingStyleImageRemovals.remove(iconKey)
         iconRefCounter[iconKey] = (iconRefCounter[iconKey] ?: 0) + 1
+    }
+
+    override fun setMarkerVisible(
+        markerEntity: MarkerEntityInterface<MapLibreActualMarker>,
+        visible: Boolean,
+    ) {
+        markerEntity.visible = visible
+        redraw()
     }
 
     override fun setMarkerPosition(
