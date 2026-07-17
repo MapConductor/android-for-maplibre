@@ -31,7 +31,7 @@ class MapLibreRasterLayerOverlayRenderer(
             .map { params ->
                 addLayer(params.state).also { handle ->
                     if (handle != null) {
-                        stateById[params.state.id] = params.state
+                        stateById[params.state.id] = params.state.copy()
                         handleById[params.state.id] = handle
                     }
                 }
@@ -55,7 +55,7 @@ class MapLibreRasterLayerOverlayRenderer(
                         prev.layer
                     }
                 if (handle != null) {
-                    stateById[next.id] = next
+                    stateById[next.id] = next.copy()
                     handleById[next.id] = handle
                 }
                 handle
@@ -195,7 +195,6 @@ class MapLibreRasterLayerOverlayRenderer(
             is RasterLayerSource.UrlTemplate -> {
                 val tileSet =
                     TileSet("2.2.0", source.template).apply {
-                        source.attribution?.let { attribution = it }
                         source.minZoom?.let { setMinZoom(it.toFloat()) }
                         source.maxZoom?.let { setMaxZoom(it.toFloat()) }
                         scheme = if (source.scheme == TileScheme.TMS) "tms" else "xyz"

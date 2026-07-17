@@ -1,6 +1,7 @@
 package com.mapconductor.maplibre
 
 import com.mapconductor.core.map.MapDesignTypeInterface
+import com.mapconductor.core.map.AttributionRule
 
 interface MapLibreMapDesignTypeInterface : MapDesignTypeInterface<String> {
     val styleJsonURL: String
@@ -9,6 +10,7 @@ interface MapLibreMapDesignTypeInterface : MapDesignTypeInterface<String> {
 data class MapLibreDesign(
     override val id: String,
     override val styleJsonURL: String,
+    override val attributionRules: List<AttributionRule> = emptyList(),
 ) : MapLibreMapDesignTypeInterface {
     override fun getValue(): String = "mapDesign_id=$id,style=$styleJsonURL"
 

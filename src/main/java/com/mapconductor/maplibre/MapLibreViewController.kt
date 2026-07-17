@@ -223,6 +223,7 @@ class MapLibreViewController(
 
         // Force redraw after adding layers
         (markerController.renderer as MapLibreMarkerOverlayRenderer).redraw()
+        circleController.renderer.redraw()
         polylineController.renderer.redraw()
 //        polygonController.polygonOverlay.onPostProcess()
         mainCoroutine.launch {

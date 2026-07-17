@@ -68,9 +68,14 @@ class MapLibreCircleOverlayRenderer(
     }
 
     override suspend fun onPostProcess() {
+        redraw()
+    }
+
+    /** Reapply the current composition after a MapLibre style is created or replaced. */
+    fun redraw() {
         val circles = circleManager.allEntities()
-        holder.map.style?.let { s ->
-            coroutine.launch { layer.draw(circles, s) }
+        holder.map.style?.let { style ->
+            coroutine.launch { layer.draw(circles, style) }
         }
     }
 }
