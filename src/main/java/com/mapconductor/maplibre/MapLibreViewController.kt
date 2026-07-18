@@ -94,7 +94,6 @@ class MapLibreViewController(
     private var markerAnimateStartListener: OnMarkerEventHandler? = null
     private var markerAnimateEndListener: OnMarkerEventHandler? = null
 
-    private var involvedMapInitializedCallback: Boolean = false
     private var lastLogicalCameraPosition: MapCameraPosition? = null
 
     private fun ensureGeoJsonSource(
@@ -804,10 +803,7 @@ class MapLibreViewController(
     // Trigger an initial camera update after the view and style are ready
     fun sendInitialCameraUpdate() {
         mainCoroutine.launch {
-            if (!involvedMapInitializedCallback) {
-                involvedMapInitializedCallback = true
-                mapInitializedCallback?.invoke()
-            }
+            notifyMapInitialized()
             val mapWidth = holder.mapView.width.toFloat()
             val mapHeight = holder.mapView.height.toFloat()
             if (mapWidth <= 0 || mapHeight <= 0) return@launch

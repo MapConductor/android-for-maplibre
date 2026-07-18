@@ -4,6 +4,7 @@ import com.mapconductor.core.polygon.AbstractPolygonOverlayRenderer
 import com.mapconductor.core.polygon.PolygonEntityInterface
 import com.mapconductor.core.polygon.PolygonManagerInterface
 import com.mapconductor.core.polygon.PolygonState
+import com.mapconductor.core.polygon.unionHoles
 import com.mapconductor.maplibre.MapLibreActualPolygon
 import com.mapconductor.maplibre.MapLibreMapViewHolderInterface
 import com.mapconductor.maplibre.createMapLibrePolygons
@@ -46,13 +47,14 @@ class MapLibrePolygonOverlayRenderer(
     }
 
     override suspend fun createPolygon(state: PolygonState): MapLibreActualPolygon? {
+        val resolved = if (state.holes.size > 1) state.unionHoles() else state
         val features = createMapLibrePolygons(
-            id = state.id,
-            points = state.points,
-            holes = state.holes,
-            geodesic = state.geodesic,
-            fillColor = state.fillColor,
-            zIndex = state.zIndex,
+            id = resolved.id,
+            points = resolved.points,
+            holes = resolved.holes,
+            geodesic = resolved.geodesic,
+            fillColor = resolved.fillColor,
+            zIndex = resolved.zIndex,
         )
 
         if (features.isEmpty()) {
