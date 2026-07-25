@@ -10,9 +10,11 @@ import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.groundimage.GroundImageEvent
 import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
+import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.VisibleRegion
+import com.mapconductor.maplibre.zoom.ZoomAltitudeConverter
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerAnimationOverlayHost
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
@@ -40,6 +42,7 @@ import com.mapconductor.maplibre.polygon.MapLibrePolygonConductor
 import com.mapconductor.maplibre.polyline.MapLibrePolylineController
 import com.mapconductor.maplibre.raster.MapLibreRasterLayerController
 import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.constants.MapLibreConstants
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.gestures.MoveGestureDetector
 import org.maplibre.android.maps.MapLibreMap
@@ -321,6 +324,24 @@ class MapLibreViewController(
         mainCoroutine.launch {
             holder.map.moveCamera(cameraUpdate)
             cameraMoveEndCallback?.invoke(readLogicalCameraPosition())
+        }
+    }
+
+    override fun setCameraRestriction(restriction: CameraRestriction?) {
+        mainCoroutine.launch {
+            holder.map.setLatLngBoundsForCameraTarget(restriction?.bounds?.toLatLngBounds())
+            // 統一ズーム（Google 準拠）を MapLibre ズームへ変換して適用。
+            // preference は解除 API が無いため、未指定時は既定の下限/上限を渡す。
+            holder.map.setMinZoomPreference(
+                restriction?.minZoom
+                    ?.let { ZoomAltitudeConverter.googleZoomToMaplibreZoom(it) }
+                    ?: MapLibreConstants.MINIMUM_ZOOM.toDouble(),
+            )
+            holder.map.setMaxZoomPreference(
+                restriction?.maxZoom
+                    ?.let { ZoomAltitudeConverter.googleZoomToMaplibreZoom(it) }
+                    ?: MapLibreConstants.MAXIMUM_ZOOM.toDouble(),
+            )
         }
     }
 

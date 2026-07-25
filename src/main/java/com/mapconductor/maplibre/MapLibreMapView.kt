@@ -10,6 +10,7 @@ import com.mapconductor.core.OnCameraMoveHandler
 import com.mapconductor.core.OnMapEventHandler
 import com.mapconductor.core.OnMapLoadedHandler
 import com.mapconductor.core.circle.CircleManager
+import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MutableMapServiceRegistry
 import com.mapconductor.core.marker.MarkerEventControllerInterface
@@ -52,6 +53,7 @@ fun MapLibreMapView(
     state: MapLibreViewState,
     modifier: Modifier = Modifier,
     markerTiling: MarkerTilingOptions? = null,
+    cameraRestriction: CameraRestriction? = null,
     sdkInitialize: (suspend (Context) -> Boolean)? = null,
     onMapLoaded: OnMapLoadedHandler? = null,
     onMapClick: OnMapEventHandler? = null,
@@ -125,6 +127,7 @@ fun MapLibreMapView(
                 mapController.setMapClickListener(onMapClick)
                 mapController.setMapDesignTypeChangeListener(state::onMapDesignTypeChange)
                 mapController.setMapLongClickListener(onMapLongClick)
+                cameraRestriction?.let { mapController.setCameraRestriction(it) }
                 state.setController(mapController)
                 // Post an initial camera update after layout to compute visibleRegion correctly
                 holder.mapView.post { mapController.sendInitialCameraUpdate() }
