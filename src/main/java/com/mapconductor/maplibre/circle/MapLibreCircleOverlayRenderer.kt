@@ -6,14 +6,14 @@ import com.mapconductor.core.circle.AbstractCircleOverlayRenderer
 import com.mapconductor.core.circle.CircleEntityInterface
 import com.mapconductor.core.circle.CircleManagerInterface
 import com.mapconductor.core.circle.CircleState
-import com.mapconductor.core.features.GeoPoint
+import com.mapconductor.core.geometry.circleToRing
+import com.mapconductor.core.geometry.closeRing
 import com.mapconductor.maplibre.MapLibreActualCircle
 import com.mapconductor.maplibre.MapLibreMapViewHolderInterface
 import com.mapconductor.maplibre.toMapLibreColorString
-import com.mapconductor.maplibre.toPoint
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.Point
-import kotlin.math.cos
+import org.maplibre.geojson.Polygon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,44 +24,13 @@ class MapLibreCircleOverlayRenderer(
     override val holder: MapLibreMapViewHolderInterface,
     override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : AbstractCircleOverlayRenderer<MapLibreActualCircle>() {
-    override suspend fun createCircle(state: CircleState): MapLibreActualCircle? {
-        val center = GeoPoint.from(state.center).toPoint()
-        val latCorr = if (state.geodesic) cos(Math.toRadians(center.latitude())) else 1.0
-        return Feature.fromGeometry(
-            Point.fromLngLat(center.longitude(), center.latitude()),
-            JsonObject().apply {
-                addProperty(MapLibreCircleLayer.Prop.LATITUDE_CORRECTION, latCorr)
-                addProperty(MapLibreCircleLayer.Prop.RADIUS, state.radiusMeters)
-                addProperty(MapLibreCircleLayer.Prop.FILL_COLOR, state.fillColor.toMapLibreColorString())
-                addProperty(MapLibreCircleLayer.Prop.STROKE_COLOR, state.strokeColor.toMapLibreColorString())
-                addProperty(MapLibreCircleLayer.Prop.STROKE_WIDTH, state.strokeWidth.value)
-                addProperty(MapLibreCircleLayer.Prop.Z_INDEX, state.zIndex ?: calculateZIndex(state.center))
-            },
-            "circle-${state.id}",
-        )
-    }
+    override suspend fun createCircle(state: CircleState): MapLibreActualCircle? = buildFeature(state)
 
     override suspend fun updateCircleProperties(
         circle: MapLibreActualCircle,
         current: CircleEntityInterface<MapLibreActualCircle>,
         prev: CircleEntityInterface<MapLibreActualCircle>,
-    ): MapLibreActualCircle? {
-        val state = current.state
-        val center = GeoPoint.from(state.center).toPoint()
-        val latCorr = if (state.geodesic) cos(Math.toRadians(center.latitude())) else 1.0
-        return Feature.fromGeometry(
-            Point.fromLngLat(center.longitude(), center.latitude()),
-            JsonObject().apply {
-                addProperty(MapLibreCircleLayer.Prop.LATITUDE_CORRECTION, latCorr)
-                addProperty(MapLibreCircleLayer.Prop.RADIUS, state.radiusMeters)
-                addProperty(MapLibreCircleLayer.Prop.FILL_COLOR, state.fillColor.toMapLibreColorString())
-                addProperty(MapLibreCircleLayer.Prop.STROKE_COLOR, state.strokeColor.toMapLibreColorString())
-                addProperty(MapLibreCircleLayer.Prop.STROKE_WIDTH, state.strokeWidth.value)
-                addProperty(MapLibreCircleLayer.Prop.Z_INDEX, state.zIndex ?: calculateZIndex(state.center))
-            },
-            "circle-${state.id}",
-        )
-    }
+    ): MapLibreActualCircle? = buildFeature(current.state)
 
     override suspend fun removeCircle(entity: CircleEntityInterface<MapLibreActualCircle>) {
         // Remove by redrawing remaining; nothing to do here
@@ -77,5 +46,28 @@ class MapLibreCircleOverlayRenderer(
         holder.map.style?.let { style ->
             coroutine.launch { layer.draw(circles, style) }
         }
+    }
+
+    private fun buildFeature(state: CircleState): Feature =
+        Feature.fromGeometry(
+            createCirclePolygon(state),
+            JsonObject().apply {
+                addProperty(MapLibreCircleLayer.Prop.FILL_COLOR, state.fillColor.toMapLibreColorString())
+                addProperty(MapLibreCircleLayer.Prop.STROKE_COLOR, state.strokeColor.toMapLibreColorString())
+                addProperty(MapLibreCircleLayer.Prop.STROKE_WIDTH, state.strokeWidth.value)
+                addProperty(MapLibreCircleLayer.Prop.Z_INDEX, state.zIndex ?: calculateZIndex(state.center))
+            },
+            "circle-${state.id}",
+        )
+
+    /**
+     * コア共通の [circleToRing] でリングを生成する。リングは中心経度まわりに連続化
+     * （unwrap）されており、MapLibre GL は ±180 を超える経度を扱えるため、±180 を跨ぐ円も
+     * 分割せず 1 枚の Polygon として描画できる（子午線の継ぎ目が出ない）。
+     */
+    private fun createCirclePolygon(state: CircleState): Polygon {
+        val ring = circleToRing(state.center, state.radiusMeters, state.geodesic)
+        val closed = closeRing(ring.map { Point.fromLngLat(it.longitude, it.latitude) })
+        return Polygon.fromLngLats(listOf(closed))
     }
 }

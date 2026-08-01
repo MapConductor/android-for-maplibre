@@ -1,80 +1,64 @@
 package com.mapconductor.maplibre.circle
 
 import com.mapconductor.core.circle.CircleEntityInterface
-import com.mapconductor.core.projection.Earth
 import com.mapconductor.maplibre.MapLibreActualCircle
 import org.maplibre.android.style.expressions.Expression
-import org.maplibre.android.style.layers.CircleLayer
-import org.maplibre.android.style.layers.PropertyFactory.circleColor
-import org.maplibre.android.style.layers.PropertyFactory.circleRadius
-import org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor
-import org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth
+import org.maplibre.android.style.layers.FillLayer
+import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.layers.Property
+import org.maplibre.android.style.layers.PropertyFactory.fillColor
+import org.maplibre.android.style.layers.PropertyFactory.fillSortKey
+import org.maplibre.android.style.layers.PropertyFactory.lineCap
+import org.maplibre.android.style.layers.PropertyFactory.lineColor
+import org.maplibre.android.style.layers.PropertyFactory.lineJoin
+import org.maplibre.android.style.layers.PropertyFactory.lineSortKey
+import org.maplibre.android.style.layers.PropertyFactory.lineWidth
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.geojson.FeatureCollection
 
+/**
+ * 円を「塗り（FillLayer）＋枠線（LineLayer）」で描画するレイヤ。
+ *
+ * 以前は native CircleLayer（画面ピクセル半径の式）で描画していたが、geodesic な円
+ * （大圏距離で等距離のリング。メルカトル上では真円にならない）を表現できないため、
+ * コア共通の circleToRing が生成するポリゴンを描画する方式（Mapbox と同方針）へ統一した。
+ */
 class MapLibreCircleLayer(
     val sourceId: String,
     val layerId: String,
 ) {
+    val strokeLayerId = "$layerId-stroke"
+
     object Prop {
-        const val RADIUS = "radius"
-        const val LATITUDE_CORRECTION = "latitudeCorrection"
         const val FILL_COLOR = "fillColor"
         const val STROKE_COLOR = "strokeColor"
         const val STROKE_WIDTH = "strokeWidth"
         const val Z_INDEX = "zIndex"
     }
 
-    companion object {
-        private const val TILE_SIZE = 512.0
-    }
-
-    private fun radiusExpression(): Expression =
-        Expression.interpolate(
-            Expression.exponential(2.0),
-            Expression.zoom(),
-            // zoom = 0
-            Expression.stop(
-                0.0,
-                Expression.product(
-                    Expression.get(Prop.RADIUS),
-                    Expression.division(
-                        Expression.literal(TILE_SIZE),
-                        Expression.product(
-                            Expression.get(Prop.LATITUDE_CORRECTION),
-                            Expression.literal(Earth.CIRCUMFERENCE_METERS),
-                        ),
-                    ),
-                ),
-            ),
-            // zoom = 22
-            Expression.stop(
-                22.0,
-                Expression.product(
-                    Expression.get(Prop.RADIUS),
-                    Expression.division(
-                        Expression.literal(TILE_SIZE),
-                        Expression.product(
-                            Expression.get(Prop.LATITUDE_CORRECTION),
-                            Expression.literal(Earth.CIRCUMFERENCE_METERS),
-                        ),
-                    ),
-                    Expression.literal(4194304.0), // 2^22
-                ),
-            ),
+    val source: GeoJsonSource =
+        GeoJsonSource(
+            sourceId,
+            FeatureCollection.fromFeatures(emptyList()),
         )
 
-    val source: GeoJsonSource = GeoJsonSource(sourceId)
-
-    val layer: CircleLayer =
-        CircleLayer(layerId, sourceId).apply {
+    /** 塗りレイヤ。レイヤ順序の互換のため id は従来の layerId を引き継ぐ。 */
+    val layer: FillLayer =
+        FillLayer(layerId, sourceId).apply {
             setProperties(
-                circleRadius(radiusExpression()),
-                circleColor(Expression.get(Prop.FILL_COLOR)),
-                circleStrokeColor(Expression.get(Prop.STROKE_COLOR)),
-                circleStrokeWidth(Expression.get(Prop.STROKE_WIDTH)),
-                org.maplibre.android.style.layers.PropertyFactory
-                    .circleSortKey(Expression.get(Prop.Z_INDEX)),
+                fillColor(Expression.get(Prop.FILL_COLOR)),
+                fillSortKey(Expression.get(Prop.Z_INDEX)),
+            )
+        }
+
+    val strokeLayer: LineLayer =
+        LineLayer(strokeLayerId, sourceId).apply {
+            setProperties(
+                lineJoin(Property.LINE_JOIN_ROUND),
+                lineCap(Property.LINE_CAP_ROUND),
+                lineColor(Expression.get(Prop.STROKE_COLOR)),
+                lineWidth(Expression.get(Prop.STROKE_WIDTH)),
+                lineSortKey(Expression.get(Prop.Z_INDEX)),
             )
         }
 

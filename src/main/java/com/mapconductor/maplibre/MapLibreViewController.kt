@@ -168,6 +168,13 @@ class MapLibreViewController(
             layer = circleController.renderer.layer.layer,
             layerId = circleController.renderer.layer.layerId,
         )
+        // Circle stroke (LineLayer) directly above the circle fill
+        addLayerAboveSafely(
+            style = style,
+            layer = circleController.renderer.layer.strokeLayer,
+            layerId = circleController.renderer.layer.strokeLayerId,
+            aboveId = circleController.renderer.layer.layerId,
+        )
 
         // Polyline (general) acts as anchor above circles
         ensureGeoJsonSource(style, polylineController.renderer.layer.sourceId)
