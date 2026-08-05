@@ -1,6 +1,5 @@
 package com.mapconductor.maplibre.marker
 
-import com.mapconductor.core.ResourceProvider
 import com.mapconductor.core.controller.OnCameraChangeReceiverInterface
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoPointInterface
@@ -10,6 +9,7 @@ import com.mapconductor.core.marker.BitmapIcon
 import com.mapconductor.core.marker.DefaultMarkerIcon
 import com.mapconductor.core.marker.MarkerEntity
 import com.mapconductor.core.marker.MarkerEntityInterface
+import com.mapconductor.core.marker.MarkerHitTest
 import com.mapconductor.core.marker.MarkerIngestionEngine
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
 import com.mapconductor.core.marker.MarkerState
@@ -21,7 +21,6 @@ import com.mapconductor.core.raster.RasterLayerState
 import com.mapconductor.core.raster.TileScheme
 import com.mapconductor.core.tileserver.TileServerRegistry
 import com.mapconductor.maplibre.MapLibreActualMarker
-import com.mapconductor.settings.Settings
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -85,29 +84,7 @@ class MapLibreMarkerController(
         val touchScreen = renderer.holder.toScreenOffset(position) ?: return null
         val markerScreen = renderer.holder.toScreenOffset(nearest.state.position) ?: return null
 
-        val tolerancePx =
-            Settings.Default.tapTolerance.value
-                .toDouble() *
-                ResourceProvider.getDensity().toDouble()
-
-        val icon = nearest.state.icon ?: DefaultMarkerIcon()
-
-        val baseSizePx = ResourceProvider.dpToPxForBitmap(icon.iconSize)
-        val iconWidthPx = baseSizePx * icon.scale.toDouble()
-        val iconHeightPx = baseSizePx * icon.scale.toDouble()
-
-        val anchorX = icon.anchor.x.toDouble()
-        val anchorY = icon.anchor.y.toDouble()
-
-        val dx = (touchScreen.x - markerScreen.x).toDouble()
-        val dy = (touchScreen.y - markerScreen.y).toDouble()
-
-        val left = -anchorX * iconWidthPx - tolerancePx
-        val right = (1.0 - anchorX) * iconWidthPx + tolerancePx
-        val top = -anchorY * iconHeightPx - tolerancePx
-        val bottom = (1.0 - anchorY) * iconHeightPx + tolerancePx
-
-        return if (dx in left..right && dy in top..bottom) {
+        return if (MarkerHitTest.hitsIcon(touchScreen, markerScreen, nearest.state)) {
             nearest
         } else {
             null

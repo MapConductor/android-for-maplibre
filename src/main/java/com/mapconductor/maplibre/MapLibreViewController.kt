@@ -1,5 +1,10 @@
 package com.mapconductor.maplibre
 
+import android.annotation.SuppressLint
+import android.graphics.PointF
+import android.util.Log
+import android.view.MotionEvent
+import android.view.View
 import androidx.compose.ui.geometry.Offset
 import com.mapconductor.core.circle.CircleEvent
 import com.mapconductor.core.circle.CircleState
@@ -13,10 +18,10 @@ import com.mapconductor.core.groundimage.OnGroundImageEventHandler
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
+import com.mapconductor.core.map.MapUISettings
 import com.mapconductor.core.map.VisibleRegion
-import com.mapconductor.maplibre.zoom.ZoomAltitudeConverter
-import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerAnimationOverlayHost
+import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
 import com.mapconductor.core.marker.MarkerRenderingStrategyInterface
 import com.mapconductor.core.marker.MarkerState
@@ -41,6 +46,11 @@ import com.mapconductor.maplibre.marker.StrategyMapLibreMarkerEventController
 import com.mapconductor.maplibre.polygon.MapLibrePolygonConductor
 import com.mapconductor.maplibre.polyline.MapLibrePolylineController
 import com.mapconductor.maplibre.raster.MapLibreRasterLayerController
+import com.mapconductor.maplibre.zoom.ZoomAltitudeConverter
+import java.util.UUID
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.constants.MapLibreConstants
 import org.maplibre.android.geometry.LatLng
@@ -54,15 +64,6 @@ import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.sources.GeoJsonSource
-import java.util.UUID
-import android.annotation.SuppressLint
-import android.graphics.PointF
-import android.util.Log
-import android.view.MotionEvent
-import android.view.View
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 typealias MapLibreDesignTypeChangeHandler = (MapLibreMapDesignTypeInterface) -> Unit
 
@@ -331,6 +332,16 @@ class MapLibreViewController(
         mainCoroutine.launch {
             holder.map.moveCamera(cameraUpdate)
             cameraMoveEndCallback?.invoke(readLogicalCameraPosition())
+        }
+    }
+
+
+    override fun applyUISettings(settings: MapUISettings) {
+        holder.map.uiSettings.apply {
+            isScrollGesturesEnabled = settings.scrollGesture
+            isZoomGesturesEnabled = settings.zoomGesture
+            isRotateGesturesEnabled = settings.rotateGesture
+            isTiltGesturesEnabled = settings.tiltGesture
         }
     }
 
