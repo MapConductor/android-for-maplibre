@@ -200,29 +200,29 @@ class MapLibreMarkerOverlayRenderer(
             }
 
             data.map {
-            val featureId = "marker-${it.state.id}"
-            val position = GeoPoint.from(it.state.position).toPoint()
-            val properties =
-                JsonObject().apply {
-                    if (it.state.icon != null) {
-                        it.state.icon?.let { icon ->
-                            val iconKey = icon.hashCode().toString()
-                            incrementIconRef(iconKey)
-                            addProperty(Prop.ICON_ID, iconKey)
-                            // icon offset property
-                            add(Prop.ICON_ANCHOR, createIconOffset(icon))
+                val featureId = "marker-${it.state.id}"
+                val position = GeoPoint.from(it.state.position).toPoint()
+                val properties =
+                    JsonObject().apply {
+                        if (it.state.icon != null) {
+                            it.state.icon?.let { icon ->
+                                val iconKey = icon.hashCode().toString()
+                                incrementIconRef(iconKey)
+                                addProperty(Prop.ICON_ID, iconKey)
+                                // icon offset property
+                                add(Prop.ICON_ANCHOR, createIconOffset(icon))
+                            }
+                        } else {
+                            addProperty(Prop.ICON_ID, Prop.DEFAULT_MARKER_ID)
+                            add(Prop.ICON_ANCHOR, getDefaultIconOffsetProperty())
                         }
-                    } else {
-                        addProperty(Prop.ICON_ID, Prop.DEFAULT_MARKER_ID)
-                        add(Prop.ICON_ANCHOR, getDefaultIconOffsetProperty())
+                        // We don't use the MapLibre SDK's scaling system
+                        // addProperty(Prop.SCALE, 1.0)
+                        addProperty(Prop.Z_INDEX, it.state.zIndex ?: calculateZIndex(it.state.position))
                     }
-                    // We don't use the MapLibre SDK's scaling system
-                    // addProperty(Prop.SCALE, 1.0)
-                    addProperty(Prop.Z_INDEX, it.state.zIndex ?: calculateZIndex(it.state.position))
-                }
-            Feature.fromGeometry(position, properties, featureId)
+                Feature.fromGeometry(position, properties, featureId)
+            }
         }
-    }
 
     private fun getDefaultIconOffsetProperty(): JsonArray = createIconOffset(defaultMarkerIcon)
 

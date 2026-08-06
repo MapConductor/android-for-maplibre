@@ -1,7 +1,7 @@
 package com.mapconductor.maplibre
 
-import com.mapconductor.core.map.MapDesignTypeInterface
 import com.mapconductor.core.map.AttributionRule
+import com.mapconductor.core.map.MapDesignTypeInterface
 
 interface MapLibreMapDesignTypeInterface : MapDesignTypeInterface<String> {
     val styleJsonURL: String

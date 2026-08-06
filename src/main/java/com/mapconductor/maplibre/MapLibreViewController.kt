@@ -1,10 +1,5 @@
 package com.mapconductor.maplibre
 
-import android.annotation.SuppressLint
-import android.graphics.PointF
-import android.util.Log
-import android.view.MotionEvent
-import android.view.View
 import androidx.compose.ui.geometry.Offset
 import com.mapconductor.core.circle.CircleEvent
 import com.mapconductor.core.circle.CircleState
@@ -47,10 +42,6 @@ import com.mapconductor.maplibre.polygon.MapLibrePolygonConductor
 import com.mapconductor.maplibre.polyline.MapLibrePolylineController
 import com.mapconductor.maplibre.raster.MapLibreRasterLayerController
 import com.mapconductor.maplibre.zoom.ZoomAltitudeConverter
-import java.util.UUID
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.constants.MapLibreConstants
 import org.maplibre.android.geometry.LatLng
@@ -64,6 +55,15 @@ import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.sources.GeoJsonSource
+import java.util.UUID
+import android.annotation.SuppressLint
+import android.graphics.PointF
+import android.util.Log
+import android.view.MotionEvent
+import android.view.View
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 typealias MapLibreDesignTypeChangeHandler = (MapLibreMapDesignTypeInterface) -> Unit
 
@@ -335,7 +335,6 @@ class MapLibreViewController(
         }
     }
 
-
     override fun applyUISettings(settings: MapUISettings) {
         holder.map.uiSettings.apply {
             isScrollGesturesEnabled = settings.scrollGesture
@@ -351,26 +350,29 @@ class MapLibreViewController(
             // 統一ズーム（Google 準拠）を MapLibre ズームへ変換して適用。
             // preference は解除 API が無いため、未指定時は既定の下限/上限を渡す。
             holder.map.setMinZoomPreference(
-                restriction?.minZoom
+                restriction
+                    ?.minZoom
                     ?.let { ZoomAltitudeConverter.googleZoomToMaplibreZoom(it) }
                     ?: MapLibreConstants.MINIMUM_ZOOM.toDouble(),
             )
             holder.map.setMaxZoomPreference(
-                restriction?.maxZoom
+                restriction
+                    ?.maxZoom
                     ?.let { ZoomAltitudeConverter.googleZoomToMaplibreZoom(it) }
                     ?: MapLibreConstants.MAXIMUM_ZOOM.toDouble(),
             )
         }
     }
 
-    override fun getControllers(): Map<String, OverlayControllerInterface<*, *>> = mapOf(
-        "marker" to markerController,
-        "polyline" to polylineController,
-        "polygon" to polygonController,
-        "circle" to circleController,
-        "ground_image" to groundImageController,
-        "raster_layer" to rasterLayerController,
-    )
+    override fun getControllers(): Map<String, OverlayControllerInterface<*, *>> =
+        mapOf(
+            "marker" to markerController,
+            "polyline" to polylineController,
+            "polygon" to polygonController,
+            "circle" to circleController,
+            "ground_image" to groundImageController,
+            "raster_layer" to rasterLayerController,
+        )
 
     private fun readLogicalCameraPosition(): MapCameraPosition =
         MapLibreCameraStateSnapshot(

@@ -23,7 +23,6 @@ class MapLibrePolygonOverlayRenderer(
     override val holder: MapLibreMapViewHolderInterface,
     override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : AbstractPolygonOverlayRenderer<MapLibreActualPolygon>() {
-
     override suspend fun onRemove(data: List<PolygonEntityInterface<MapLibreActualPolygon>>) {
         coroutine.launch {
             holder.map.style?.let {
@@ -48,19 +47,20 @@ class MapLibrePolygonOverlayRenderer(
 
     override suspend fun createPolygon(state: PolygonState): MapLibreActualPolygon? {
         val resolved = if (state.holes.size > 1) state.unionHoles() else state
-        val features = createMapLibrePolygons(
-            id = resolved.id,
-            points = resolved.points,
-            holes = resolved.holes,
-            geodesic = resolved.geodesic,
-            fillColor = resolved.fillColor,
-            zIndex = resolved.zIndex,
-        )
+        val features =
+            createMapLibrePolygons(
+                id = resolved.id,
+                points = resolved.points,
+                holes = resolved.holes,
+                geodesic = resolved.geodesic,
+                fillColor = resolved.fillColor,
+                zIndex = resolved.zIndex,
+            )
 
         if (features.isEmpty()) {
             return null
         }
-        return features  // MapLibreActualPolygon = List<Feature>
+        return features // MapLibreActualPolygon = List<Feature>
     }
 
     override suspend fun updatePolygonProperties(

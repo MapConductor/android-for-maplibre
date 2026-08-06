@@ -32,9 +32,10 @@ class MapLibreMarkerController(
     private val markerTiling: MarkerTilingOptions = MarkerTilingOptions.Default,
     private val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : AbstractMarkerController<MapLibreActualMarker>(
-    markerManager = renderer.markerManager,
-    renderer = renderer,
-), OnCameraChangeReceiverInterface {
+        markerManager = renderer.markerManager,
+        renderer = renderer,
+    ),
+    OnCameraChangeReceiverInterface {
     private var internalSelectedMarker: MarkerEntityInterface<MapLibreActualMarker>? = null
 
     private val defaultMarkerIcon: BitmapIcon = DefaultMarkerIcon().toBitmapIcon()

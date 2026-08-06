@@ -5,7 +5,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.mapconductor.compose.map.BaseMapViewSaver
-import com.mapconductor.core.controller.OverlayControllerInterface
 import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.map.MapCameraPosition
@@ -49,9 +48,10 @@ class MapLibreViewState(
         position: GeoPoint,
         durationMillis: Long?,
     ) {
-        val newPosition = this.cameraPosition.copy(
-            position = position,
-        )
+        val newPosition =
+            this.cameraPosition.copy(
+                position = position,
+            )
         this.moveCameraTo(newPosition, durationMillis)
     }
 

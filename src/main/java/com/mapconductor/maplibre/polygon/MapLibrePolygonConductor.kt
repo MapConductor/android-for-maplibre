@@ -90,7 +90,6 @@ class MapLibrePolygonConductor(
         clickListener?.invoke(event)
     }
 
-
     @Suppress("UNCHECKED_CAST")
     override fun find(position: GeoPointInterface): PolygonEntityInterface<PolygonState>? =
         polygonOverlay.polygonManager.find(position) as? PolygonEntityInterface<PolygonState>

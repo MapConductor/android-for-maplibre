@@ -77,6 +77,12 @@ dependencies {
     // MapLibre SDK
     api(libs.maplibre.sdk)
     api(libs.maplibre.annotation)
+
+    // MapLibre のタイル取得は OkHttp。`HttpRequestUtil.setOkHttpClient()` に
+    // Interceptor 付きクライアントを渡してラスタタイルのヘッダを差し替える
+    // （MapLibreRasterHeaderInjector）。MapLibre は OkHttp を implementation で
+    // 抱えていて外へ出さないので、こちらでも明示的に依存する。
+    implementation(libs.okhttp)
     if (findProject(":android-sdk-compose") != null) {
         api(project(":android-sdk-compose"))
     } else {

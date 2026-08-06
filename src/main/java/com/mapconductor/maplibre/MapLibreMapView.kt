@@ -66,7 +66,6 @@ fun MapLibreMapView(
     val context = LocalContext.current
     val scope = remember { MapLibreMapViewScope() }
     val registry = remember { scope.buildRegistry() }
-    val serviceRegistry = remember { MutableMapServiceRegistry() }
     val cameraState = remember { mutableStateOf<MapCameraPositionInterface?>(state.cameraPosition) }
 
     MapViewBase(
@@ -87,7 +86,6 @@ fun MapLibreMapView(
         },
         scope = scope,
         registry = registry,
-        serviceRegistry = serviceRegistry,
         onMapLoaded = onMapLoaded,
         holderProvider = { mapView ->
             suspendCancellableCoroutine { continuation ->
@@ -96,7 +94,7 @@ fun MapLibreMapView(
                     map.setStyle(state.mapDesignType.styleJsonURL) {
                         // Resume only after style is fully loaded
                         continuation.resume(
-                            MapLibreMapViewHolder(mapView, map)
+                            MapLibreMapViewHolder(mapView, map),
                         ) { _, _, _ -> }
                     }
                 }
@@ -106,7 +104,7 @@ fun MapLibreMapView(
             createMapLibreViewController(
                 holder = holder,
                 markerTiling = markerTiling ?: MarkerTilingOptions.Default,
-                serviceRegistry = serviceRegistry,
+                serviceRegistry = state.serviceRegistry,
             ).also { mapController ->
                 // Store controller reference in holder
                 mapController.setCameraMoveStartListener {
@@ -152,6 +150,10 @@ fun MapLibreMapView(
  * Creates the imperative controller graph used by both the Compose MapView and non-Compose hosts
  * such as React Native. Keeping this construction here prevents provider-specific layer setup from
  * being duplicated by each UI integration.
+ *
+ * @param serviceRegistry 登録先のサービスレジストリ。Compose からは `state.serviceRegistry` を渡す
+ *   （react-sdk / ios-sdk と同じく持ち主は state）。React Native / Cordova のような非 Compose
+ *   ホストは state を持たないので、自前のレジストリを渡す。
  */
 fun createMapLibreViewController(
     holder: MapLibreMapViewHolderInterface,
@@ -171,7 +173,6 @@ fun createMapLibreViewController(
         )
 
     serviceRegistry?.let { registry ->
-        registry.clear()
         registry.put(
             MarkerRenderingSupportKey,
             object : MarkerRenderingSupport<MapLibreActualMarker> {
@@ -253,9 +254,7 @@ fun getPolylineController(holder: MapLibreMapViewHolderInterface): MapLibrePolyl
     return controller
 }
 
-fun getPolygonController(
-    holder: MapLibreMapViewHolderInterface,
-): MapLibrePolygonConductor {
+fun getPolygonController(holder: MapLibreMapViewHolderInterface): MapLibrePolygonConductor {
     val polylineLayer =
         MapLibrePolylineLayer(
             sourceId = "polygon-outline-source",

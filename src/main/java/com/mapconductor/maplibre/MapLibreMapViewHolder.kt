@@ -8,7 +8,7 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import android.graphics.PointF
 
-interface MapLibreMapViewHolderInterface : MapViewHolderInterface<MapView, MapLibreMap> {}
+interface MapLibreMapViewHolderInterface : MapViewHolderInterface<MapView, MapLibreMap>
 
 class MapLibreMapViewHolder(
     override val mapView: MapView,
