@@ -1,20 +1,16 @@
 package com.mapconductor.maplibre
 
-import androidx.compose.ui.geometry.Offset
-import com.mapconductor.core.circle.CircleEvent
 import com.mapconductor.core.circle.CircleState
 import com.mapconductor.core.circle.OnCircleEventHandler
 import com.mapconductor.core.controller.BaseMapViewController
 import com.mapconductor.core.controller.OverlayControllerInterface
+import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.features.GeoRectBounds
-import com.mapconductor.core.groundimage.GroundImageEvent
 import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
-import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MapUISettings
-import com.mapconductor.core.map.VisibleRegion
 import com.mapconductor.core.marker.MarkerAnimationOverlayHost
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
@@ -23,10 +19,8 @@ import com.mapconductor.core.marker.MarkerState
 import com.mapconductor.core.marker.OnMarkerEventHandler
 import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.polygon.OnPolygonEventHandler
-import com.mapconductor.core.polygon.PolygonEvent
 import com.mapconductor.core.polygon.PolygonState
 import com.mapconductor.core.polyline.OnPolylineEventHandler
-import com.mapconductor.core.polyline.PolylineEvent
 import com.mapconductor.core.polyline.PolylineState
 import com.mapconductor.core.raster.RasterLayerState
 import com.mapconductor.maplibre.circle.MapLibreCircleController
@@ -41,25 +35,13 @@ import com.mapconductor.maplibre.marker.StrategyMapLibreMarkerEventController
 import com.mapconductor.maplibre.polygon.MapLibrePolygonConductor
 import com.mapconductor.maplibre.polyline.MapLibrePolylineController
 import com.mapconductor.maplibre.raster.MapLibreRasterLayerController
-import com.mapconductor.maplibre.zoom.ZoomAltitudeConverter
-import org.maplibre.android.camera.CameraUpdateFactory
-import org.maplibre.android.constants.MapLibreConstants
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.gestures.MoveGestureDetector
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
-import org.maplibre.android.style.expressions.Expression
-import org.maplibre.android.style.layers.FillLayer
-import org.maplibre.android.style.layers.Layer
-import org.maplibre.android.style.layers.LineLayer
-import org.maplibre.android.style.layers.Property
-import org.maplibre.android.style.layers.PropertyFactory
-import org.maplibre.android.style.sources.GeoJsonSource
 import java.util.UUID
 import android.annotation.SuppressLint
-import android.graphics.PointF
 import android.util.Log
-import android.view.MotionEvent
 import android.view.View
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -69,12 +51,12 @@ typealias MapLibreDesignTypeChangeHandler = (MapLibreMapDesignTypeInterface) -> 
 
 class MapLibreViewController(
     override val holder: MapLibreMapViewHolderInterface,
-    private val markerController: MapLibreMarkerController,
-    private val polylineController: MapLibrePolylineController,
-    private val polygonController: MapLibrePolygonConductor,
-    private val groundImageController: MapLibreGroundImageController,
-    private val circleController: MapLibreCircleController,
-    private val rasterLayerController: MapLibreRasterLayerController,
+    internal val markerController: MapLibreMarkerController,
+    internal val polylineController: MapLibrePolylineController,
+    internal val polygonController: MapLibrePolygonConductor,
+    internal val groundImageController: MapLibreGroundImageController,
+    internal val circleController: MapLibreCircleController,
+    internal val rasterLayerController: MapLibreRasterLayerController,
     override val mainCoroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
     override val defaultCoroutine: CoroutineScope = CoroutineScope(Dispatchers.Default),
 ) : BaseMapViewController(),
@@ -85,162 +67,20 @@ class MapLibreViewController(
     MapLibreMap.OnCameraMoveListener,
     MapLibreMap.OnCameraIdleListener {
     // Keep reference to the style instance to avoid getting a new one
-    private var styleInstance: Style? = null
-    private var wasScrollEnabledBeforeDrag: Boolean? = null
-    private var dragTouchInterceptor: View.OnTouchListener? = null
-    private val polygonZLayers: MutableSet<Int> = mutableSetOf()
-    private val markerEventControllers = mutableListOf<MapLibreMarkerEventControllerInterface>()
-    private var activeDragController: MapLibreMarkerEventControllerInterface? = null
-    private var markerClickListener: OnMarkerEventHandler? = null
-    private var markerDragStartListener: OnMarkerEventHandler? = null
-    private var markerDragListener: OnMarkerEventHandler? = null
-    private var markerDragEndListener: OnMarkerEventHandler? = null
-    private var markerAnimateStartListener: OnMarkerEventHandler? = null
-    private var markerAnimateEndListener: OnMarkerEventHandler? = null
+    internal var styleInstance: Style? = null
+    internal var wasScrollEnabledBeforeDrag: Boolean? = null
+    internal var dragTouchInterceptor: View.OnTouchListener? = null
+    internal val polygonZLayers: MutableSet<Int> = mutableSetOf()
+    internal val markerEventControllers = mutableListOf<MapLibreMarkerEventControllerInterface>()
+    internal var activeDragController: MapLibreMarkerEventControllerInterface? = null
+    internal var markerClickListener: OnMarkerEventHandler? = null
+    internal var markerDragStartListener: OnMarkerEventHandler? = null
+    internal var markerDragListener: OnMarkerEventHandler? = null
+    internal var markerDragEndListener: OnMarkerEventHandler? = null
+    internal var markerAnimateStartListener: OnMarkerEventHandler? = null
+    internal var markerAnimateEndListener: OnMarkerEventHandler? = null
 
-    private var lastLogicalCameraPosition: MapCameraPosition? = null
-
-    private fun ensureGeoJsonSource(
-        style: Style,
-        sourceId: String,
-    ) {
-        if (style.getSource(sourceId) != null) return
-        try {
-            style.addSource(GeoJsonSource(sourceId))
-        } catch (e: Exception) {
-            Log.w("MapLibre", "Failed to add source: $sourceId (${e.message})")
-        }
-    }
-
-    private fun addLayerSafely(
-        style: Style,
-        layer: Layer,
-        layerId: String,
-    ) {
-        if (style.getLayer(layerId) != null) return
-        try {
-            style.addLayer(layer)
-        } catch (e: Exception) {
-            if (style.getLayer(layerId) == null) {
-                Log.w("MapLibre", "Failed to add layer: $layerId (${e.message})")
-            }
-        }
-    }
-
-    private fun addLayerAboveSafely(
-        style: Style,
-        layer: Layer,
-        layerId: String,
-        aboveId: String,
-    ) {
-        if (style.getLayer(layerId) != null) return
-        try {
-            style.addLayerAbove(layer, aboveId)
-        } catch (_: Exception) {
-            if (style.getLayer(layerId) != null) return
-            try {
-                style.addLayer(layer)
-            } catch (e2: Exception) {
-                if (style.getLayer(layerId) == null) {
-                    Log.w("MapLibre", "Failed to add layer: $layerId (${e2.message})")
-                }
-            }
-        }
-    }
-
-    private fun setupStyle(style: Style) {
-        // Store the style instance for future use
-        styleInstance = style
-
-        // Log existing layers
-        // val topLayerId = style.layers.lastOrNull()?.id
-
-        // Ensure default icon image exists on this style
-        (markerController.renderer as MapLibreMarkerOverlayRenderer).ensureDefaultIcon(style)
-
-        // Polygon sources only (layers will be added per zIndex)
-        ensureGeoJsonSource(style, polygonController.polylineOverlay.layer.sourceId)
-        ensureGeoJsonSource(style, polygonController.polygonOverlay.layer.sourceId)
-
-        // Circle cts as anchor above polygons
-        ensureGeoJsonSource(style, circleController.renderer.layer.sourceId)
-        addLayerSafely(
-            style = style,
-            layer = circleController.renderer.layer.layer,
-            layerId = circleController.renderer.layer.layerId,
-        )
-        // Circle stroke (LineLayer) directly above the circle fill
-        addLayerAboveSafely(
-            style = style,
-            layer = circleController.renderer.layer.strokeLayer,
-            layerId = circleController.renderer.layer.strokeLayerId,
-            aboveId = circleController.renderer.layer.layerId,
-        )
-
-        // Polyline (general) acts as anchor above circles
-        ensureGeoJsonSource(style, polylineController.renderer.layer.sourceId)
-        addLayerSafely(
-            style = style,
-            layer = polylineController.renderer.layer.layer,
-            layerId = polylineController.renderer.layer.layerId,
-        )
-
-        // Add z-indexed polygon layers below general polylines
-        ensurePolygonZLayers(style)
-
-        // Marker - add source and layer at the top
-        ensureGeoJsonSource(style, (markerController.renderer as MapLibreMarkerOverlayRenderer).markerLayer.sourceId)
-        addLayerAboveSafely(
-            style = style,
-            layer = (markerController.renderer as MapLibreMarkerOverlayRenderer).markerLayer.layer,
-            layerId = (markerController.renderer as MapLibreMarkerOverlayRenderer).markerLayer.layerId,
-            aboveId = polylineController.renderer.layer.layerId,
-        )
-        (markerController.renderer as MapLibreMarkerOverlayRenderer).redraw()
-
-        // Drag layer above marker layer
-        ensureGeoJsonSource(style, (markerController.renderer as MapLibreMarkerOverlayRenderer).dragLayer.sourceId)
-        addLayerAboveSafely(
-            style = style,
-            layer = (markerController.renderer as MapLibreMarkerOverlayRenderer).dragLayer.layer,
-            layerId = (markerController.renderer as MapLibreMarkerOverlayRenderer).dragLayer.layerId,
-            aboveId = (markerController.renderer as MapLibreMarkerOverlayRenderer).markerLayer.layerId,
-        )
-        (markerController.renderer as MapLibreMarkerOverlayRenderer).redraw()
-
-        markerEventControllers
-            .map { it.renderer }
-            .filter { it != markerController.renderer }
-            .forEach { renderer ->
-                renderer.ensureDefaultIcon(style)
-                ensureGeoJsonSource(style, renderer.markerLayer.sourceId)
-                addLayerAboveSafely(
-                    style = style,
-                    layer = renderer.markerLayer.layer,
-                    layerId = renderer.markerLayer.layerId,
-                    aboveId = polylineController.renderer.layer.layerId,
-                )
-                ensureGeoJsonSource(style, renderer.dragLayer.sourceId)
-                addLayerAboveSafely(
-                    style = style,
-                    layer = renderer.dragLayer.layer,
-                    layerId = renderer.dragLayer.layerId,
-                    aboveId = renderer.markerLayer.layerId,
-                )
-                renderer.redraw()
-                renderer.drawDragLayer()
-            }
-
-        // Force redraw after adding layers
-        (markerController.renderer as MapLibreMarkerOverlayRenderer).redraw()
-        circleController.renderer.redraw()
-        polylineController.renderer.redraw()
-//        polygonController.polygonOverlay.onPostProcess()
-        mainCoroutine.launch {
-            groundImageController.reapplyStyle()
-            rasterLayerController.reapplyStyle()
-        }
-    }
+    internal var lastLogicalCameraPosition: MapCameraPosition? = null
 
     init {
         // Style should already be loaded by holderProvider
@@ -296,44 +136,19 @@ class MapLibreViewController(
         rasterLayerController.clear()
     }
 
-    override fun moveCamera(position: MapCameraPosition) {
-        lastLogicalCameraPosition = position
-        mainCoroutine.launch {
-            val cameraPos = position.toCameraPosition()
-            val cameraUpdate =
-                CameraUpdateFactory
-                    .newCameraPosition(cameraPos)
-            holder.map.moveCamera(cameraUpdate)
-            cameraMoveEndCallback?.invoke(position)
-        }
-    }
+    override fun moveCamera(position: MapCameraPosition) = handleMoveCamera(position)
 
     override fun animateCamera(
         position: MapCameraPosition,
         duration: Long,
-    ) {
-        lastLogicalCameraPosition = position
-        mainCoroutine.launch {
-            val cameraPos = position.toCameraPosition()
-            val cameraUpdate =
-                CameraUpdateFactory
-                    .newCameraPosition(cameraPos)
-            holder.map.animateCamera(cameraUpdate, duration.toInt())
-            cameraMoveEndCallback?.invoke(position)
-        }
-    }
+    ) = handleAnimateCamera(position, duration)
 
     override fun fitBounds(
         bounds: GeoRectBounds,
         padding: Int,
-    ) {
-        val latLngBounds = bounds.toLatLngBounds() ?: return
-        val cameraUpdate = CameraUpdateFactory.newLatLngBounds(latLngBounds, padding)
-        mainCoroutine.launch {
-            holder.map.moveCamera(cameraUpdate)
-            cameraMoveEndCallback?.invoke(readLogicalCameraPosition())
-        }
-    }
+    ) = handleFitBounds(bounds, padding)
+
+    override fun setCameraRestriction(restriction: CameraRestriction?) = handleCameraRestriction(restriction)
 
     override fun applyUISettings(settings: MapUISettings) {
         holder.map.uiSettings.apply {
@@ -341,26 +156,6 @@ class MapLibreViewController(
             isZoomGesturesEnabled = settings.zoomGesture
             isRotateGesturesEnabled = settings.rotateGesture
             isTiltGesturesEnabled = settings.tiltGesture
-        }
-    }
-
-    override fun setCameraRestriction(restriction: CameraRestriction?) {
-        mainCoroutine.launch {
-            holder.map.setLatLngBoundsForCameraTarget(restriction?.bounds?.toLatLngBounds())
-            // 統一ズーム（Google 準拠）を MapLibre ズームへ変換して適用。
-            // preference は解除 API が無いため、未指定時は既定の下限/上限を渡す。
-            holder.map.setMinZoomPreference(
-                restriction
-                    ?.minZoom
-                    ?.let { ZoomAltitudeConverter.googleZoomToMaplibreZoom(it) }
-                    ?: MapLibreConstants.MINIMUM_ZOOM.toDouble(),
-            )
-            holder.map.setMaxZoomPreference(
-                restriction
-                    ?.maxZoom
-                    ?.let { ZoomAltitudeConverter.googleZoomToMaplibreZoom(it) }
-                    ?: MapLibreConstants.MAXIMUM_ZOOM.toDouble(),
-            )
         }
     }
 
@@ -374,11 +169,8 @@ class MapLibreViewController(
             "raster_layer" to rasterLayerController,
         )
 
-    private fun readLogicalCameraPosition(): MapCameraPosition =
-        MapLibreCameraStateSnapshot(
-            cameraPosition = holder.map.cameraPosition,
-            logicalTiltHint = lastLogicalCameraPosition?.tilt,
-        ).toMapCameraPosition()
+    // Provide access to the style instance
+    fun getStyleInstance(): Style? = styleInstance
 
     private var mapDesignTypeChangeListener: MapLibreDesignTypeChangeHandler? = null
 
@@ -391,8 +183,19 @@ class MapLibreViewController(
         }
     }
 
-    // Provide access to the style instance
-    fun getStyleInstance(): Style? = styleInstance
+    fun sendInitialCameraUpdate() {
+        mainCoroutine.launch {
+            notifyMapInitialized()
+            val mapWidth = holder.mapView.width.toFloat()
+            val mapHeight = holder.mapView.height.toFloat()
+            if (mapWidth <= 0 || mapHeight <= 0) return@launch
+
+            val camera = readLogicalCameraPosition()
+            getMapCameraPosition(camera)?.let { mapCameraPosition ->
+                defaultCoroutine.launch { notifyMapCameraPosition(mapCameraPosition) }
+            }
+        }
+    }
 
     override fun setMapDesignTypeChangeListener(listener: MapLibreDesignTypeChangeHandler) {
         mapDesignTypeChangeListener = listener
@@ -508,184 +311,35 @@ class MapLibreViewController(
         this.groundImageController.clickListener = listener
     }
 
-    override fun onMapClick(point: LatLng): Boolean {
-        val touchPosition = point.toGeoPoint()
-
-        markerEventControllers.forEach { controller ->
-            controller.find(touchPosition)?.let { entity ->
-                controller.dispatchClick(entity.state)
-                return true
-            }
-        }
-
-        circleController.find(touchPosition)?.let { entity ->
-            val event = CircleEvent(state = entity.state, clicked = touchPosition)
-            circleController.dispatchClick(event)
-            return true
-        }
-
-        groundImageController.find(touchPosition)?.let { entity ->
-            val event = GroundImageEvent(state = entity.state, clicked = touchPosition)
-            groundImageController.dispatchClick(event)
-            return true
-        }
-
-        polylineController.findWithClosestPoint(touchPosition)?.let { hitResult ->
-            val event =
-                PolylineEvent(
-                    state = hitResult.entity.state,
-                    clicked = hitResult.closestPoint,
-                )
-            mainCoroutine.launch {
-                polylineController.dispatchClick(event)
-            }
-            return true
-        }
-
-        polygonController.find(touchPosition)?.let { polygonEntity ->
-            val event =
-                PolygonEvent(
-                    state = polygonEntity.state,
-                    clicked = touchPosition,
-                )
-            polygonController.dispatchClick(event)
-            return true
-        }
-
-        mapClickCallback?.invoke(touchPosition)
-        return true
+    // 拡張ファイル（Gestures / Camera）からは基底クラスの protected へ触れないため、
+    // ここで internal の入口を用意しておく。
+    internal fun emitMapClick(point: GeoPoint) {
+        mapClickCallback?.invoke(point)
     }
 
-    override fun onMapLongClick(point: LatLng): Boolean {
-        val touchPosition = point.toGeoPoint()
-        markerEventControllers.forEach { controller ->
-            controller.find(touchPosition)?.let { entity ->
-                if (entity.state.draggable) {
-                    // Disable map scroll while dragging a marker
-                    try {
-                        val ui = holder.map.uiSettings
-                        wasScrollEnabledBeforeDrag = ui.isScrollGesturesEnabled
-                        ui.isScrollGesturesEnabled = false
-                    } catch (e: Exception) {
-                        Log.w("MapLibre", "Failed to disable scroll gestures: ${e.message}")
-                    }
-                    activeDragController = controller
-                    controller.setSelectedMarker(entity)
-                    controller.dispatchDragStart(entity.state)
-                    // Intercept touch to move marker without moving the map
-                    installDragTouchInterceptor()
-                    return true
-                }
-            }
-        }
-
-        mapLongClickCallback?.invoke(touchPosition)
-        return true
+    internal fun emitMapLongClick(point: GeoPoint) {
+        mapLongClickCallback?.invoke(point)
     }
 
-    override fun onMoveBegin(detector: MoveGestureDetector) {
-        mainCoroutine.launch {
-            getMapCameraPosition(readLogicalCameraPosition())?.let { mapCameraPosition ->
-                cameraMoveStartCallback?.invoke(mapCameraPosition)
-            }
-        }
+    internal fun emitCameraMoveStart(position: MapCameraPosition) {
+        cameraMoveStartCallback?.invoke(position)
     }
 
-    override fun onMove(detector: MoveGestureDetector) {
-        val controller = activeDragController ?: return
-        controller.getSelectedMarker()?.let { entity ->
-
-            val screenCoordinate =
-                Offset(
-                    detector.focalPoint.x,
-                    detector.focalPoint.y,
-                )
-
-            holder.fromScreenOffsetSync(screenCoordinate)?.let {
-                entity.state.position = it
-                controller.renderer.dragLayer.updatePosition(it)
-                controller.renderer.drawDragLayer()
-            }
-
-            controller.dispatchDrag(entity.state)
-        }
+    internal fun emitCameraMoveEnd(position: MapCameraPosition) {
+        cameraMoveEndCallback?.invoke(position)
     }
 
-    override fun onMoveEnd(detector: MoveGestureDetector) {
-        val controller = activeDragController ?: return
-        controller.getSelectedMarker()?.let { entity ->
-            val screenCoordinate =
-                PointF(
-                    detector.focalPoint.x,
-                    detector.focalPoint.y,
-                )
-            val point = holder.map.projection.fromScreenLocation(screenCoordinate)
-            controller.renderer.dragLayer.updatePosition(point.toGeoPoint())
-            controller.setSelectedMarker(null)
-            controller.dispatchDragEnd(entity.state)
-            // Re-enable map scroll after dragging finishes
-            try {
-                val ui = holder.map.uiSettings
-                ui.isScrollGesturesEnabled = wasScrollEnabledBeforeDrag == true
-            } catch (e: Exception) {
-                Log.w("MapLibre", "Failed to re-enable scroll gestures: ${e.message}")
-            } finally {
-                wasScrollEnabledBeforeDrag = null
-            }
-            removeDragTouchInterceptor()
-            activeDragController = null
-        }
-    }
+    override fun onMapClick(point: LatLng): Boolean = handleMapClick(point)
+
+    override fun onMapLongClick(point: LatLng): Boolean = handleMapLongClick(point)
+
+    override fun onMoveBegin(detector: MoveGestureDetector) = handleMoveBegin(detector)
+
+    override fun onMove(detector: MoveGestureDetector) = handleMove(detector)
+
+    override fun onMoveEnd(detector: MoveGestureDetector) = handleMoveEnd(detector)
 
     @SuppressLint("ClickableViewAccessibility")
-    private fun installDragTouchInterceptor() {
-        if (dragTouchInterceptor != null) return
-        val view = holder.mapView
-        dragTouchInterceptor =
-            View.OnTouchListener { _, event ->
-                val controller = activeDragController ?: return@OnTouchListener false
-                val selected = controller.getSelectedMarker() ?: return@OnTouchListener false
-                when (event.actionMasked) {
-                    MotionEvent.ACTION_MOVE -> {
-                        val pos = holder.fromScreenOffsetSync(Offset(event.x, event.y))
-                        if (pos != null) {
-                            selected.state.position = pos
-                            controller.renderer.dragLayer.updatePosition(pos)
-                            controller.renderer.drawDragLayer()
-                            controller.dispatchDrag(selected.state)
-                        }
-                        true // consume to prevent map panning
-                    }
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                        val point = holder.map.projection.fromScreenLocation(PointF(event.x, event.y))
-                        controller.renderer.dragLayer.updatePosition(point.toGeoPoint())
-                        controller.setSelectedMarker(null)
-                        controller.dispatchDragEnd(selected.state)
-                        try {
-                            val ui = holder.map.uiSettings
-                            ui.isScrollGesturesEnabled = wasScrollEnabledBeforeDrag == true
-                        } catch (e: Exception) {
-                            Log.w("MapLibre", "Failed to re-enable scroll gestures: ${e.message}")
-                        } finally {
-                            wasScrollEnabledBeforeDrag = null
-                        }
-                        removeDragTouchInterceptor()
-                        activeDragController = null
-                        true
-                    }
-                    else -> false
-                }
-            }
-        view.setOnTouchListener(dragTouchInterceptor)
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private fun removeDragTouchInterceptor() {
-        val view = holder.mapView
-        view.setOnTouchListener(null)
-        dragTouchInterceptor = null
-    }
-
     override fun onCameraMove() {
         mainCoroutine.launch {
             getMapCameraPosition(readLogicalCameraPosition())?.let { mapCameraPosition ->
@@ -704,154 +358,6 @@ class MapLibreViewController(
                     notifyMapCameraPosition(mapCameraPosition)
                 }
                 cameraMoveEndCallback?.invoke(mapCameraPosition)
-            }
-        }
-    }
-
-    private fun getMapCameraPosition(camera: MapCameraPositionInterface): MapCameraPosition? {
-        val mapWidth = holder.mapView.width.toFloat()
-        val mapHeight = holder.mapView.height.toFloat()
-        val nearLeft =
-            holder.fromScreenOffsetSync(
-                Offset(0.0f, mapHeight),
-            ) ?: return null
-        val nearRight =
-            holder.fromScreenOffsetSync(
-                Offset(mapWidth, mapHeight),
-            ) ?: return null
-        val farLeft =
-            holder.fromScreenOffsetSync(
-                Offset(0.0f, 0.0f),
-            ) ?: return null
-        val farRight =
-            holder.fromScreenOffsetSync(
-                Offset(mapWidth, 0.0f),
-            ) ?: return null
-
-        val bounds = GeoRectBounds()
-        bounds.extend(nearLeft)
-        bounds.extend(nearRight)
-        bounds.extend(farLeft)
-        bounds.extend(farRight)
-        val visibleRegion =
-            VisibleRegion(
-                bounds = bounds,
-                nearLeft = nearLeft,
-                nearRight = nearRight,
-                farLeft = farLeft,
-                farRight = farRight,
-            )
-        val mapCameraPosition =
-            MapCameraPosition.from(camera).copy(
-                visibleRegion = visibleRegion,
-            )
-        return mapCameraPosition
-    }
-
-    private fun ensurePolygonZLayers(style: Style) {
-        val fillSourceId = polygonController.polygonOverlay.layer.sourceId
-        val outlineSourceId = polygonController.polylineOverlay.layer.sourceId
-        val anchorId = polylineController.renderer.layer.layerId
-
-        val zSet =
-            polygonController.polygonOverlay.polygonManager
-                .allEntities()
-                .map { it.state.zIndex }
-                .toSet()
-
-        // Remove stale z-indexed layers we previously created
-        val toRemove = polygonZLayers.subtract(zSet)
-        toRemove.forEach { z ->
-            val fillId = "polygon-fill-layer-$z"
-            val outlineId = "polygon-outline-layer-$z"
-            try {
-                style.removeLayer(outlineId)
-            } catch (_: Exception) {
-            }
-            try {
-                style.removeLayer(fillId)
-            } catch (_: Exception) {
-            }
-        }
-
-        val zList = zSet.toList().sorted()
-        zList.forEach { z ->
-            val fillId = "polygon-fill-layer-$z"
-            val outlineId = "polygon-outline-layer-$z"
-
-            if (style.getLayer(fillId) == null) {
-                val fill =
-                    FillLayer(fillId, fillSourceId).apply {
-                        setFilter(
-                            Expression.eq(
-                                Expression
-                                    .get("zIndex"),
-                                Expression
-                                    .literal(z),
-                            ),
-                        )
-                        setProperties(
-                            PropertyFactory.fillColor(
-                                Expression
-                                    .get("fillColor"),
-                            ),
-                        )
-                    }
-                try {
-                    style.addLayerBelow(fill, anchorId)
-                } catch (_: Exception) {
-                    style.addLayer(fill)
-                }
-            }
-
-            if (style.getLayer(outlineId) == null) {
-                val outline =
-                    LineLayer(outlineId, outlineSourceId).apply {
-                        setFilter(
-                            Expression.eq(
-                                Expression
-                                    .get("zIndex"),
-                                Expression
-                                    .literal(z),
-                            ),
-                        )
-                        setProperties(
-                            PropertyFactory
-                                .lineJoin(Property.LINE_JOIN_ROUND),
-                            PropertyFactory
-                                .lineCap(Property.LINE_CAP_ROUND),
-                            PropertyFactory.lineColor(
-                                Expression
-                                    .get("strokeColor"),
-                            ),
-                            PropertyFactory.lineWidth(
-                                Expression
-                                    .get("strokeWidth"),
-                            ),
-                        )
-                    }
-                try {
-                    style.addLayerAbove(outline, fillId)
-                } catch (_: Exception) {
-                    style.addLayer(outline)
-                }
-            }
-        }
-        polygonZLayers.clear()
-        polygonZLayers.addAll(zSet)
-    }
-
-    // Trigger an initial camera update after the view and style are ready
-    fun sendInitialCameraUpdate() {
-        mainCoroutine.launch {
-            notifyMapInitialized()
-            val mapWidth = holder.mapView.width.toFloat()
-            val mapHeight = holder.mapView.height.toFloat()
-            if (mapWidth <= 0 || mapHeight <= 0) return@launch
-
-            val camera = readLogicalCameraPosition()
-            getMapCameraPosition(camera)?.let { mapCameraPosition ->
-                defaultCoroutine.launch { notifyMapCameraPosition(mapCameraPosition) }
             }
         }
     }
