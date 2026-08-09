@@ -5,8 +5,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.mapconductor.compose.map.BaseMapViewSaver
-import com.mapconductor.core.features.GeoPoint
-import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MapViewState
@@ -20,14 +18,11 @@ class MapLibreViewState(
     mapDesignType: MapLibreMapDesignTypeInterface,
     override val id: String,
     cameraPosition: MapCameraPosition = MapCameraPosition.Default,
-) : MapViewState<MapLibreMapDesignTypeInterface>(),
+) : MapViewState<MapLibreMapDesignTypeInterface>(cameraPosition),
     MapLibreViewStateInterface {
     private var controller: MapLibreViewControllerInterface? = null
     private var _mapDesignType: MapLibreMapDesignTypeInterface = mapDesignType
 
-    private var _cameraPosition: MapCameraPosition = cameraPosition
-    override val cameraPosition: MapCameraPosition
-        get() = _cameraPosition
     override var mapDesignType: MapLibreMapDesignTypeInterface
         set(value) {
             _mapDesignType = value
@@ -37,53 +32,19 @@ class MapLibreViewState(
 
     internal fun setController(controller: MapLibreViewControllerInterface) {
         this.controller = controller
-        controller.moveCamera(this.cameraPosition)
+        attachController(controller)
     }
 
     internal fun onMapDesignTypeChange(value: MapLibreMapDesignTypeInterface) {
         _mapDesignType = value
     }
 
-    override fun moveCameraTo(
-        position: GeoPoint,
-        durationMillis: Long?,
-    ) {
-        val newPosition =
-            this.cameraPosition.copy(
-                position = position,
-            )
-        this.moveCameraTo(newPosition, durationMillis)
-    }
-
-    @Suppress("UNCHECKED_CAST")
+    /** 戻り型をこのプロバイダのホルダーへ絞る（アプリが `?.map` を取れる形を保つため）。 */
     override fun getMapViewHolder(): MapLibreMapViewHolderInterface? =
-        controller?.holder as? MapLibreMapViewHolderInterface
-
-    override fun moveCameraTo(
-        cameraPosition: MapCameraPosition,
-        durationMillis: Long?,
-    ) {
-        controller?.let { ctrl ->
-            val dstCameraPosition = MapCameraPosition.from(cameraPosition)
-            if (durationMillis == null || durationMillis == 0L) {
-                ctrl.moveCamera(dstCameraPosition)
-            } else {
-                ctrl.animateCamera(dstCameraPosition, durationMillis)
-            }
-            return@let
-        }
-        this._cameraPosition = cameraPosition
-    }
-
-    override fun fitBounds(
-        bounds: GeoRectBounds,
-        padding: Int,
-    ) {
-        controller?.fitBounds(bounds, padding)
-    }
+        super.getMapViewHolder() as? MapLibreMapViewHolderInterface
 
     internal fun updateCameraPosition(cameraPosition: MapCameraPosition) {
-        this._cameraPosition = cameraPosition
+        setCameraPositionInternal(cameraPosition)
     }
 }
 
