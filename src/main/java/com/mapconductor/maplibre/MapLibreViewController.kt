@@ -2,7 +2,7 @@ package com.mapconductor.maplibre
 
 import com.mapconductor.core.circle.OnCircleEventHandler
 import com.mapconductor.core.controller.BaseMapViewController
-import com.mapconductor.core.features.GeoPoint
+import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
 import com.mapconductor.core.map.CameraRestriction
@@ -14,6 +14,7 @@ import com.mapconductor.core.marker.MarkerOverlayRendererInterface
 import com.mapconductor.core.marker.MarkerRenderingStrategyInterface
 import com.mapconductor.core.marker.OnMarkerEventHandler
 import com.mapconductor.core.marker.StrategyMarkerController
+import com.mapconductor.core.marker.dispatchGeoMarkerClick
 import com.mapconductor.core.polygon.OnPolygonEventHandler
 import com.mapconductor.core.polygon.PolygonState
 import com.mapconductor.core.polyline.OnPolylineEventHandler
@@ -257,16 +258,17 @@ class MapLibreViewController(
         this.groundImageController.clickListener = listener
     }
 
+    /**
+     * マーカーのヒットテスト。クリックカスケードの先頭。
+     *
+     * MapLibre は地図クリックの座標からそのまま引けるので、コアの
+     * [dispatchGeoMarkerClick] に委ねる（`clickable = false` の透過もそちら）。
+     */
+    override fun dispatchMarkerTap(position: GeoPointInterface): Boolean =
+        markerEventControllers.dispatchGeoMarkerClick(position)
+
     // 拡張ファイル（Gestures / Camera）からは基底クラスの protected へ触れないため、
     // ここで internal の入口を用意しておく。
-    internal fun emitMapClick(point: GeoPoint) {
-        mapClickCallback?.invoke(point)
-    }
-
-    internal fun emitMapLongClick(point: GeoPoint) {
-        mapLongClickCallback?.invoke(point)
-    }
-
     internal fun emitCameraMoveStart(position: MapCameraPosition) {
         cameraMoveStartCallback?.invoke(position)
     }

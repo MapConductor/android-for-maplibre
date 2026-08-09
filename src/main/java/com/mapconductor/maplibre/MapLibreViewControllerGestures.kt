@@ -1,11 +1,6 @@
 package com.mapconductor.maplibre
 
 import androidx.compose.ui.geometry.Offset
-import com.mapconductor.core.circle.CircleEvent
-import com.mapconductor.core.groundimage.GroundImageEvent
-import com.mapconductor.core.marker.clickableOnly
-import com.mapconductor.core.polygon.PolygonEvent
-import com.mapconductor.core.polyline.PolylineEvent
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.gestures.MoveGestureDetector
 import android.annotation.SuppressLint
@@ -22,8 +17,9 @@ import kotlinx.coroutines.launch
  * 残って地図が流れる。ビューの手前で touch を受けて握りつぶす。
  *
  * 同じファイルの `handleMapClick` / `handleMapLongClick` はタップの受け口。
- * タップは**マーカーが先**で、どのマーカーにも当たらなかったときだけ地図の
- * タップとして扱う。当たり判定は各マーカーイベントコントローラーが持つ。
+ * タップのカスケード（marker → circle → groundImage → polyline → polygon → map）は
+ * コアの [com.mapconductor.core.controller.BaseMapViewController.dispatchTap] が回すので、
+ * ここは座標を変換して渡すだけ。長押しはドラッグ開始の判定が要るのでここに残す。
  */
 internal fun MapLibreViewController.installDragTouchInterceptor() {
     if (dragTouchInterceptor != null) return
@@ -73,53 +69,7 @@ internal fun MapLibreViewController.removeDragTouchInterceptor() {
     dragTouchInterceptor = null
 }
 
-internal fun MapLibreViewController.handleMapClick(point: LatLng): Boolean {
-    val touchPosition = point.toGeoPoint()
-
-    markerEventControllers.forEach { controller ->
-        controller.find(touchPosition).clickableOnly()?.let { entity ->
-            controller.dispatchClick(entity.state)
-            return true
-        }
-    }
-
-    circleController.find(touchPosition)?.let { entity ->
-        val event = CircleEvent(state = entity.state, clicked = touchPosition)
-        circleController.dispatchClick(event)
-        return true
-    }
-
-    groundImageController.find(touchPosition)?.let { entity ->
-        val event = GroundImageEvent(state = entity.state, clicked = touchPosition)
-        groundImageController.dispatchClick(event)
-        return true
-    }
-
-    polylineController.findWithClosestPoint(touchPosition)?.let { hitResult ->
-        val event =
-            PolylineEvent(
-                state = hitResult.entity.state,
-                clicked = hitResult.closestPoint,
-            )
-        mainCoroutine.launch {
-            polylineController.dispatchClick(event)
-        }
-        return true
-    }
-
-    polygonController.find(touchPosition)?.let { polygonEntity ->
-        val event =
-            PolygonEvent(
-                state = polygonEntity.state,
-                clicked = touchPosition,
-            )
-        polygonController.dispatchClick(event)
-        return true
-    }
-
-    emitMapClick(touchPosition)
-    return true
-}
+internal fun MapLibreViewController.handleMapClick(point: LatLng): Boolean = dispatchTap(point.toGeoPoint())
 
 internal fun MapLibreViewController.handleMapLongClick(point: LatLng): Boolean {
     val touchPosition = point.toGeoPoint()
