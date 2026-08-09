@@ -3,6 +3,7 @@ package com.mapconductor.maplibre
 import androidx.compose.ui.geometry.Offset
 import com.mapconductor.core.circle.CircleEvent
 import com.mapconductor.core.groundimage.GroundImageEvent
+import com.mapconductor.core.marker.clickableOnly
 import com.mapconductor.core.polygon.PolygonEvent
 import com.mapconductor.core.polyline.PolylineEvent
 import org.maplibre.android.geometry.LatLng
@@ -76,7 +77,7 @@ internal fun MapLibreViewController.handleMapClick(point: LatLng): Boolean {
     val touchPosition = point.toGeoPoint()
 
     markerEventControllers.forEach { controller ->
-        controller.find(touchPosition)?.let { entity ->
+        controller.find(touchPosition).clickableOnly()?.let { entity ->
             controller.dispatchClick(entity.state)
             return true
         }
