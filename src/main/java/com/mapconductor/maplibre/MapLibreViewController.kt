@@ -8,6 +8,7 @@ import com.mapconductor.core.groundimage.OnGroundImageEventHandler
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapUISettings
+import com.mapconductor.core.marker.DefaultMarkerEventController
 import com.mapconductor.core.marker.MarkerAnimationOverlayHost
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
@@ -20,13 +21,10 @@ import com.mapconductor.core.polygon.PolygonState
 import com.mapconductor.core.polyline.OnPolylineEventHandler
 import com.mapconductor.maplibre.circle.MapLibreCircleController
 import com.mapconductor.maplibre.groundimage.MapLibreGroundImageController
-import com.mapconductor.maplibre.marker.DefaultMapLibreMarkerEventController
 import com.mapconductor.maplibre.marker.MapLibreMarkerController
-import com.mapconductor.maplibre.marker.MapLibreMarkerEventControllerInterface
 import com.mapconductor.maplibre.marker.MapLibreMarkerOverlayRenderer
 import com.mapconductor.maplibre.marker.MarkerDragLayer
 import com.mapconductor.maplibre.marker.MarkerLayer
-import com.mapconductor.maplibre.marker.StrategyMapLibreMarkerEventController
 import com.mapconductor.maplibre.polygon.MapLibrePolygonConductor
 import com.mapconductor.maplibre.polyline.MapLibrePolylineController
 import com.mapconductor.maplibre.raster.MapLibreRasterLayerController
@@ -66,8 +64,8 @@ class MapLibreViewController(
     internal var wasScrollEnabledBeforeDrag: Boolean? = null
     internal var dragTouchInterceptor: View.OnTouchListener? = null
     internal val polygonZLayers: MutableSet<Int> = mutableSetOf()
-    internal val markerEventControllers = mutableListOf<MapLibreMarkerEventControllerInterface>()
-    internal var activeDragController: MapLibreMarkerEventControllerInterface? = null
+    internal val markerEventControllers = mutableListOf<DefaultMarkerEventController<MapLibreActualMarker>>()
+    internal var activeDragController: DefaultMarkerEventController<MapLibreActualMarker>? = null
     internal var markerClickListener: OnMarkerEventHandler? = null
     internal var markerDragStartListener: OnMarkerEventHandler? = null
     internal var markerDragListener: OnMarkerEventHandler? = null
@@ -93,7 +91,7 @@ class MapLibreViewController(
         registerOverlayController(groundImageController)
         registerOverlayController(circleController)
         registerOverlayController(rasterLayerController)
-        registerMarkerEventController(DefaultMapLibreMarkerEventController(markerController))
+        registerMarkerEventController(DefaultMarkerEventController(markerController))
 
         markerController.setRasterLayerCallback { state ->
             if (state != null) {
@@ -310,7 +308,7 @@ class MapLibreViewController(
         }
     }
 
-    internal fun registerMarkerEventController(controller: MapLibreMarkerEventControllerInterface) {
+    internal fun registerMarkerEventController(controller: DefaultMarkerEventController<MapLibreActualMarker>) {
         if (markerEventControllers.contains(controller)) return
         markerEventControllers.add(controller)
         controller.setClickListener(markerClickListener)
@@ -320,24 +318,25 @@ class MapLibreViewController(
         controller.setAnimateStartListener(markerAnimateStartListener)
         controller.setAnimateEndListener(markerAnimateEndListener)
 
+        val renderer = controller.renderer as MapLibreMarkerOverlayRenderer
         styleInstance?.let { style ->
-            controller.renderer.ensureDefaultIcon(style)
-            ensureGeoJsonSource(style, controller.renderer.markerLayer.sourceId)
+            renderer.ensureDefaultIcon(style)
+            ensureGeoJsonSource(style, renderer.markerLayer.sourceId)
             addLayerAboveSafely(
                 style = style,
-                layer = controller.renderer.markerLayer.layer,
-                layerId = controller.renderer.markerLayer.layerId,
+                layer = renderer.markerLayer.layer,
+                layerId = renderer.markerLayer.layerId,
                 aboveId = polylineController.renderer.layer.layerId,
             )
-            ensureGeoJsonSource(style, controller.renderer.dragLayer.sourceId)
+            ensureGeoJsonSource(style, renderer.dragLayer.sourceId)
             addLayerAboveSafely(
                 style = style,
-                layer = controller.renderer.dragLayer.layer,
-                layerId = controller.renderer.dragLayer.layerId,
-                aboveId = controller.renderer.markerLayer.layerId,
+                layer = renderer.dragLayer.layer,
+                layerId = renderer.dragLayer.layerId,
+                aboveId = renderer.markerLayer.layerId,
             )
-            controller.renderer.redraw()
-            controller.renderer.drawDragLayer()
+            renderer.redraw()
+            renderer.drawDragLayer()
         }
     }
 
@@ -366,14 +365,11 @@ class MapLibreViewController(
     fun createMarkerEventController(
         controller: StrategyMarkerController<MapLibreActualMarker>,
         renderer: MarkerOverlayRendererInterface<MapLibreActualMarker>,
-    ): MarkerEventControllerInterface<MapLibreActualMarker> =
-        StrategyMapLibreMarkerEventController(
-            controller = controller,
-            renderer = renderer as MapLibreMarkerOverlayRenderer,
-        )
+    ): MarkerEventControllerInterface<MapLibreActualMarker> = DefaultMarkerEventController(controller)
 
     fun registerMarkerEventController(controller: MarkerEventControllerInterface<MapLibreActualMarker>) {
-        val typed = controller as? MapLibreMarkerEventControllerInterface ?: return
+        @Suppress("UNCHECKED_CAST")
+        val typed = controller as? DefaultMarkerEventController<MapLibreActualMarker> ?: return
         registerMarkerEventController(typed)
     }
 }

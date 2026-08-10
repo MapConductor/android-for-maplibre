@@ -1,7 +1,6 @@
 package com.mapconductor.maplibre.marker
 
 import com.mapconductor.core.controller.OnCameraChangeReceiverInterface
-import com.mapconductor.core.features.GeoPoint
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.marker.AbstractMarkerController
 import com.mapconductor.core.marker.BitmapIcon
@@ -35,8 +34,6 @@ class MapLibreMarkerController(
         renderer = renderer,
     ),
     OnCameraChangeReceiverInterface {
-    private var internalSelectedMarker: MarkerEntityInterface<MapLibreActualMarker>? = null
-
     private val defaultMarkerIcon: BitmapIcon = DefaultMarkerIcon().toBitmapIcon()
     private val tiledMarkerIds = LinkedHashSet<String>()
 
@@ -64,30 +61,6 @@ class MapLibreMarkerController(
             setTileLayerVisible = ::setTileLayerVisible,
             invalidateTiles = ::updateRasterLayerSource,
         )
-
-    internal var selectedMarker: MarkerEntityInterface<MapLibreActualMarker>?
-        set(value) {
-            (renderer as MapLibreMarkerOverlayRenderer).let { actualRenderer ->
-                if (value == null) {
-                    internalSelectedMarker?.let { selectedMarker ->
-                        actualRenderer.dragLayer.updatePosition(GeoPoint.from(selectedMarker.state.position))
-                        actualRenderer.dragLayer.selected = null
-                        actualRenderer.drawDragLayer()
-                        markerManager.registerEntity(selectedMarker)
-                        actualRenderer.redraw()
-                    }
-                    internalSelectedMarker = null
-                    return
-                }
-                internalSelectedMarker = value
-                markerManager.removeEntity(value.state.id)
-                actualRenderer.dragLayer.selected = value
-                actualRenderer.dragLayer.updatePosition(GeoPoint.from(value.state.position))
-                actualRenderer.redraw()
-                actualRenderer.drawDragLayer()
-            }
-        }
-        get() = internalSelectedMarker
 
     fun setRasterLayerCallback(callback: MarkerTileRasterLayerCallback?) {
         rasterLayerCallback = callback

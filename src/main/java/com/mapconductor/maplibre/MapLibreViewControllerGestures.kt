@@ -33,15 +33,14 @@ internal fun MapLibreViewController.installDragTouchInterceptor() {
                     val pos = holder.fromScreenOffsetSync(Offset(event.x, event.y))
                     if (pos != null) {
                         selected.state.position = pos
-                        controller.renderer.dragLayer.updatePosition(pos)
-                        controller.renderer.drawDragLayer()
+                        controller.updateDragPosition(pos)
                         controller.dispatchDrag(selected.state)
                     }
                     true // consume to prevent map panning
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     val point = holder.map.projection.fromScreenLocation(PointF(event.x, event.y))
-                    controller.renderer.dragLayer.updatePosition(point.toGeoPoint())
+                    controller.updateDragPosition(point.toGeoPoint())
                     controller.setSelectedMarker(null)
                     controller.dispatchDragEnd(selected.state)
                     try {
@@ -118,8 +117,7 @@ internal fun MapLibreViewController.handleMove(detector: MoveGestureDetector) {
 
         holder.fromScreenOffsetSync(screenCoordinate)?.let {
             entity.state.position = it
-            controller.renderer.dragLayer.updatePosition(it)
-            controller.renderer.drawDragLayer()
+            controller.updateDragPosition(it)
         }
 
         controller.dispatchDrag(entity.state)
@@ -135,7 +133,7 @@ internal fun MapLibreViewController.handleMoveEnd(detector: MoveGestureDetector)
                 detector.focalPoint.y,
             )
         val point = holder.map.projection.fromScreenLocation(screenCoordinate)
-        controller.renderer.dragLayer.updatePosition(point.toGeoPoint())
+        controller.updateDragPosition(point.toGeoPoint())
         controller.setSelectedMarker(null)
         controller.dispatchDragEnd(entity.state)
         // Re-enable map scroll after dragging finishes
