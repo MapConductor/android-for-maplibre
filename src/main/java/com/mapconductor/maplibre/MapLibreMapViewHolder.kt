@@ -25,6 +25,4 @@ class MapLibreMapViewHolder(
 
     override fun fromScreenOffsetSync(offset: Offset): GeoPoint? =
         map.projection.fromScreenLocation(PointF(offset.x, offset.y)).toGeoPoint()
-
-    override suspend fun fromScreenOffset(offset: Offset): GeoPoint? = fromScreenOffsetSync(offset)
 }

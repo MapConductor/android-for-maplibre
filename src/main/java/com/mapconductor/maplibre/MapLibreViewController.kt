@@ -1,36 +1,30 @@
 package com.mapconductor.maplibre
 
-import com.mapconductor.core.circle.CircleState
 import com.mapconductor.core.circle.OnCircleEventHandler
 import com.mapconductor.core.controller.BaseMapViewController
-import com.mapconductor.core.features.GeoPoint
+import com.mapconductor.core.features.GeoPointInterface
 import com.mapconductor.core.features.GeoRectBounds
-import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapUISettings
+import com.mapconductor.core.marker.DefaultMarkerEventController
 import com.mapconductor.core.marker.MarkerAnimationOverlayHost
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
 import com.mapconductor.core.marker.MarkerRenderingStrategyInterface
-import com.mapconductor.core.marker.MarkerState
 import com.mapconductor.core.marker.OnMarkerEventHandler
 import com.mapconductor.core.marker.StrategyMarkerController
+import com.mapconductor.core.marker.dispatchGeoMarkerClick
 import com.mapconductor.core.polygon.OnPolygonEventHandler
 import com.mapconductor.core.polygon.PolygonState
 import com.mapconductor.core.polyline.OnPolylineEventHandler
-import com.mapconductor.core.polyline.PolylineState
-import com.mapconductor.core.raster.RasterLayerState
 import com.mapconductor.maplibre.circle.MapLibreCircleController
 import com.mapconductor.maplibre.groundimage.MapLibreGroundImageController
-import com.mapconductor.maplibre.marker.DefaultMapLibreMarkerEventController
 import com.mapconductor.maplibre.marker.MapLibreMarkerController
-import com.mapconductor.maplibre.marker.MapLibreMarkerEventControllerInterface
 import com.mapconductor.maplibre.marker.MapLibreMarkerOverlayRenderer
 import com.mapconductor.maplibre.marker.MarkerDragLayer
 import com.mapconductor.maplibre.marker.MarkerLayer
-import com.mapconductor.maplibre.marker.StrategyMapLibreMarkerEventController
 import com.mapconductor.maplibre.polygon.MapLibrePolygonConductor
 import com.mapconductor.maplibre.polyline.MapLibrePolylineController
 import com.mapconductor.maplibre.raster.MapLibreRasterLayerController
@@ -70,8 +64,8 @@ class MapLibreViewController(
     internal var wasScrollEnabledBeforeDrag: Boolean? = null
     internal var dragTouchInterceptor: View.OnTouchListener? = null
     internal val polygonZLayers: MutableSet<Int> = mutableSetOf()
-    internal val markerEventControllers = mutableListOf<MapLibreMarkerEventControllerInterface>()
-    internal var activeDragController: MapLibreMarkerEventControllerInterface? = null
+    internal val markerEventControllers = mutableListOf<DefaultMarkerEventController<MapLibreActualMarker>>()
+    internal var activeDragController: DefaultMarkerEventController<MapLibreActualMarker>? = null
     internal var markerClickListener: OnMarkerEventHandler? = null
     internal var markerDragStartListener: OnMarkerEventHandler? = null
     internal var markerDragListener: OnMarkerEventHandler? = null
@@ -97,7 +91,7 @@ class MapLibreViewController(
         registerOverlayController(groundImageController)
         registerOverlayController(circleController)
         registerOverlayController(rasterLayerController)
-        registerMarkerEventController(DefaultMapLibreMarkerEventController(markerController))
+        registerMarkerEventController(DefaultMarkerEventController(markerController))
 
         markerController.setRasterLayerCallback { state ->
             if (state != null) {
@@ -192,21 +186,9 @@ class MapLibreViewController(
         // listener(mapDesignType)
     }
 
-    override suspend fun compositionMarkers(data: List<MarkerState>) = markerController.add(data)
-
     override fun setMarkerAnimationOverlayHost(host: MarkerAnimationOverlayHost?) {
         (markerController.renderer as MapLibreMarkerOverlayRenderer).animationOverlayHost = host
     }
-
-    override suspend fun updateMarker(state: MarkerState) = markerController.update(state)
-
-    override suspend fun compositionGroundImages(data: List<GroundImageState>) = groundImageController.add(data)
-
-    override suspend fun updateGroundImage(state: GroundImageState) = groundImageController.update(state)
-
-    override suspend fun compositionPolylines(data: List<PolylineState>) = polylineController.add(data)
-
-    override suspend fun updatePolyline(state: PolylineState) = polylineController.update(state)
 
     override suspend fun compositionPolygons(data: List<PolygonState>) {
         polygonController.add(data)
@@ -217,14 +199,6 @@ class MapLibreViewController(
         polygonController.update(state)
         getStyleInstance()?.let { ensurePolygonZLayers(it) }
     }
-
-    override suspend fun compositionCircles(data: List<CircleState>) = circleController.add(data)
-
-    override suspend fun updateCircle(state: CircleState) = circleController.update(state)
-
-    override suspend fun compositionRasterLayers(data: List<RasterLayerState>) = rasterLayerController.add(data)
-
-    override suspend fun updateRasterLayer(state: RasterLayerState) = rasterLayerController.update(state)
 
     @Deprecated("Use MarkerState.onDragStart instead.")
     override fun setOnMarkerDragStart(listener: OnMarkerEventHandler?) {
@@ -277,39 +251,22 @@ class MapLibreViewController(
         markerEventControllers.forEach { it.setClickListener(listener) }
     }
 
-    override fun hasMarker(state: MarkerState): Boolean = this.markerController.markerManager.hasEntity(state.id)
-
-    override fun hasPolyline(state: PolylineState): Boolean =
-        this.polylineController.polylineManager
-            .hasEntity(state.id)
-
-    override fun hasPolygon(state: PolygonState): Boolean =
-        this.polygonController.polygonOverlay.polygonManager
-            .hasEntity(state.id)
-
-    override fun hasCircle(state: CircleState): Boolean = this.circleController.circleManager.hasEntity(state.id)
-
-    override fun hasGroundImage(state: GroundImageState): Boolean =
-        this.groundImageController.groundImageManager.hasEntity(state.id)
-
-    override fun hasRasterLayer(state: RasterLayerState): Boolean =
-        this.rasterLayerController.rasterLayerManager.hasEntity(state.id)
-
     @Deprecated("Use GroundImageState.onClick instead.")
     override fun setOnGroundImageClickListener(listener: OnGroundImageEventHandler?) {
         this.groundImageController.clickListener = listener
     }
 
+    /**
+     * マーカーのヒットテスト。クリックカスケードの先頭。
+     *
+     * MapLibre は地図クリックの座標からそのまま引けるので、コアの
+     * [dispatchGeoMarkerClick] に委ねる（`clickable = false` の透過もそちら）。
+     */
+    override fun dispatchMarkerTap(position: GeoPointInterface): Boolean =
+        markerEventControllers.dispatchGeoMarkerClick(position)
+
     // 拡張ファイル（Gestures / Camera）からは基底クラスの protected へ触れないため、
     // ここで internal の入口を用意しておく。
-    internal fun emitMapClick(point: GeoPoint) {
-        mapClickCallback?.invoke(point)
-    }
-
-    internal fun emitMapLongClick(point: GeoPoint) {
-        mapLongClickCallback?.invoke(point)
-    }
-
     internal fun emitCameraMoveStart(position: MapCameraPosition) {
         cameraMoveStartCallback?.invoke(position)
     }
@@ -351,7 +308,7 @@ class MapLibreViewController(
         }
     }
 
-    internal fun registerMarkerEventController(controller: MapLibreMarkerEventControllerInterface) {
+    internal fun registerMarkerEventController(controller: DefaultMarkerEventController<MapLibreActualMarker>) {
         if (markerEventControllers.contains(controller)) return
         markerEventControllers.add(controller)
         controller.setClickListener(markerClickListener)
@@ -361,24 +318,25 @@ class MapLibreViewController(
         controller.setAnimateStartListener(markerAnimateStartListener)
         controller.setAnimateEndListener(markerAnimateEndListener)
 
+        val renderer = controller.renderer as MapLibreMarkerOverlayRenderer
         styleInstance?.let { style ->
-            controller.renderer.ensureDefaultIcon(style)
-            ensureGeoJsonSource(style, controller.renderer.markerLayer.sourceId)
+            renderer.ensureDefaultIcon(style)
+            ensureGeoJsonSource(style, renderer.markerLayer.sourceId)
             addLayerAboveSafely(
                 style = style,
-                layer = controller.renderer.markerLayer.layer,
-                layerId = controller.renderer.markerLayer.layerId,
+                layer = renderer.markerLayer.layer,
+                layerId = renderer.markerLayer.layerId,
                 aboveId = polylineController.renderer.layer.layerId,
             )
-            ensureGeoJsonSource(style, controller.renderer.dragLayer.sourceId)
+            ensureGeoJsonSource(style, renderer.dragLayer.sourceId)
             addLayerAboveSafely(
                 style = style,
-                layer = controller.renderer.dragLayer.layer,
-                layerId = controller.renderer.dragLayer.layerId,
-                aboveId = controller.renderer.markerLayer.layerId,
+                layer = renderer.dragLayer.layer,
+                layerId = renderer.dragLayer.layerId,
+                aboveId = renderer.markerLayer.layerId,
             )
-            controller.renderer.redraw()
-            controller.renderer.drawDragLayer()
+            renderer.redraw()
+            renderer.drawDragLayer()
         }
     }
 
@@ -407,14 +365,11 @@ class MapLibreViewController(
     fun createMarkerEventController(
         controller: StrategyMarkerController<MapLibreActualMarker>,
         renderer: MarkerOverlayRendererInterface<MapLibreActualMarker>,
-    ): MarkerEventControllerInterface<MapLibreActualMarker> =
-        StrategyMapLibreMarkerEventController(
-            controller = controller,
-            renderer = renderer as MapLibreMarkerOverlayRenderer,
-        )
+    ): MarkerEventControllerInterface<MapLibreActualMarker> = DefaultMarkerEventController(controller)
 
     fun registerMarkerEventController(controller: MarkerEventControllerInterface<MapLibreActualMarker>) {
-        val typed = controller as? MapLibreMarkerEventControllerInterface ?: return
+        @Suppress("UNCHECKED_CAST")
+        val typed = controller as? DefaultMarkerEventController<MapLibreActualMarker> ?: return
         registerMarkerEventController(typed)
     }
 }

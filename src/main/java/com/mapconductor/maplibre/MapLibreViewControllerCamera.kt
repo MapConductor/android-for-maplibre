@@ -1,11 +1,10 @@
 package com.mapconductor.maplibre
 
-import androidx.compose.ui.geometry.Offset
 import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
-import com.mapconductor.core.map.VisibleRegion
+import com.mapconductor.core.map.buildVisibleRegion
 import com.mapconductor.maplibre.zoom.ZoomAltitudeConverter
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.constants.MapLibreConstants
@@ -24,43 +23,9 @@ internal fun MapLibreViewController.readLogicalCameraPosition(): MapCameraPositi
     ).toMapCameraPosition()
 
 internal fun MapLibreViewController.getMapCameraPosition(camera: MapCameraPositionInterface): MapCameraPosition? {
-    val mapWidth = holder.mapView.width.toFloat()
-    val mapHeight = holder.mapView.height.toFloat()
-    val nearLeft =
-        holder.fromScreenOffsetSync(
-            Offset(0.0f, mapHeight),
-        ) ?: return null
-    val nearRight =
-        holder.fromScreenOffsetSync(
-            Offset(mapWidth, mapHeight),
-        ) ?: return null
-    val farLeft =
-        holder.fromScreenOffsetSync(
-            Offset(0.0f, 0.0f),
-        ) ?: return null
-    val farRight =
-        holder.fromScreenOffsetSync(
-            Offset(mapWidth, 0.0f),
-        ) ?: return null
-
-    val bounds = GeoRectBounds()
-    bounds.extend(nearLeft)
-    bounds.extend(nearRight)
-    bounds.extend(farLeft)
-    bounds.extend(farRight)
-    val visibleRegion =
-        VisibleRegion(
-            bounds = bounds,
-            nearLeft = nearLeft,
-            nearRight = nearRight,
-            farLeft = farLeft,
-            farRight = farRight,
-        )
-    val mapCameraPosition =
-        MapCameraPosition.from(camera).copy(
-            visibleRegion = visibleRegion,
-        )
-    return mapCameraPosition
+    // 4 隅の逆投影は全プロバイダ共通なのでコアの buildVisibleRegion を使う。
+    val visibleRegion = holder.buildVisibleRegion() ?: return null
+    return MapCameraPosition.from(camera).copy(visibleRegion = visibleRegion)
 }
 
 internal fun MapLibreViewController.handleMoveCamera(position: MapCameraPosition) {

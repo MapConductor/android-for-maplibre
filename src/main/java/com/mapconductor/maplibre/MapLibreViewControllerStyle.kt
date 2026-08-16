@@ -131,7 +131,7 @@ internal fun MapLibreViewController.setupStyle(style: Style) {
     (markerController.renderer as MapLibreMarkerOverlayRenderer).redraw()
 
     markerEventControllers
-        .map { it.renderer }
+        .map { it.renderer as MapLibreMarkerOverlayRenderer }
         .filter { it != markerController.renderer }
         .forEach { renderer ->
             renderer.ensureDefaultIcon(style)
