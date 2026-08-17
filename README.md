@@ -10,6 +10,12 @@ Even you use the wrapper API, but you can still access to the native MapLibre vi
 
 https://mapconductor.com/setup/android/maplibre/
 
+### API key
+
+**No API key.** MapLibre renders from whatever style URL you point it at. If that
+style or its tiles come from a commercial provider, the key belongs to the style
+URL, not to this module.
+
 ## Usage
 
 ```kotlin
