@@ -282,6 +282,7 @@ class MapLibreMarkerController(
                     cacheSizeBytes = markerTiling.cacheSize,
                     debugTileOverlay = markerTiling.debugTileOverlay,
                     iconScaleCallback = markerTiling.iconScaleCallback,
+                    declutterPx = markerTiling.declutterPx,
                 )
             markerTileRenderer = tileRenderer
 
