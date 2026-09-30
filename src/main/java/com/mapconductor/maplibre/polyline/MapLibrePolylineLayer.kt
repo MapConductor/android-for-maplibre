@@ -29,8 +29,15 @@ class MapLibrePolylineLayer(
             FeatureCollection.fromFeatures(emptyList()),
         )
 
-    val layer: LineLayer =
-        LineLayer(layerId, sourceId).apply {
+    // A fresh native layer on every read. MapLibre releases a Layer's core
+    // object into the style it is added to, and the Java object can never be
+    // added again ("Cannot add layer twice") -- so the one built for the
+    // first style was silently refused by every style loaded after it, and
+    // a design change lost the overlays. Only `setupStyle` reads this, once
+    // per style load.
+    val layer: LineLayer
+        get() =
+            LineLayer(layerId, sourceId).apply {
             setProperties(
                 lineJoin(Property.LINE_JOIN_ROUND),
                 lineCap(Property.LINE_CAP_ROUND),

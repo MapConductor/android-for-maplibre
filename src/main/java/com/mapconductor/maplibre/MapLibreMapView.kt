@@ -13,6 +13,8 @@ import com.mapconductor.core.circle.CircleManager
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MutableMapServiceRegistry
+import com.mapconductor.core.map.VectorStyleAsDesign
+import com.mapconductor.core.map.VectorStyleSupportKey
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerManager
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
@@ -127,6 +129,17 @@ fun MapLibreMapView(
                 mapController.setMapLongClickListener(onMapLongClick)
                 cameraRestriction?.let { mapController.setCameraRestriction(it) }
                 state.setController(mapController)
+                // MapLibre draws vector styles natively: a layer with a style
+                // to show hands it over instead of rasterising it. Registered
+                // here and not in `createMapLibreViewController` because it
+                // acts on the *state's* design, which non-Compose hosts do
+                // not have.
+                state.serviceRegistry.put(
+                    VectorStyleSupportKey,
+                    VectorStyleAsDesign(state) { url, rules ->
+                        MapLibreDesign(id = "vector-style:$url", styleJsonURL = url, attributionRules = rules)
+                    },
+                )
                 // Post an initial camera update after layout to compute visibleRegion correctly
                 holder.mapView.post { mapController.sendInitialCameraUpdate() }
             }

@@ -155,6 +155,14 @@ class MapLibreViewController(
     // Provide access to the style instance
     fun getStyleInstance(): Style? = styleInstance
 
+    /**
+     * The style, only while it is the one the map draws. A style that a
+     * newer one has replaced or is replacing throws on every call
+     * ("Calling getLayer when a newer style is loading"); overlays added
+     * then are re-added by `setupStyle` once the new style has loaded.
+     */
+    internal fun loadedStyle(): Style? = styleInstance?.takeIf { it.isFullyLoaded }
+
     private var mapDesignTypeChangeListener: MapLibreDesignTypeChangeHandler? = null
 
     override fun setMapDesignType(value: MapLibreMapDesignTypeInterface) {
@@ -192,12 +200,12 @@ class MapLibreViewController(
 
     override suspend fun compositionPolygons(data: List<PolygonState>) {
         polygonController.add(data)
-        getStyleInstance()?.let { ensurePolygonZLayers(it) }
+        loadedStyle()?.let { ensurePolygonZLayers(it) }
     }
 
     override suspend fun updatePolygon(state: PolygonState) {
         polygonController.update(state)
-        getStyleInstance()?.let { ensurePolygonZLayers(it) }
+        loadedStyle()?.let { ensurePolygonZLayers(it) }
     }
 
     @Deprecated("Use MarkerState.onDragStart instead.")
@@ -319,7 +327,7 @@ class MapLibreViewController(
         controller.setAnimateEndListener(markerAnimateEndListener)
 
         val renderer = controller.renderer as MapLibreMarkerOverlayRenderer
-        styleInstance?.let { style ->
+        loadedStyle()?.let { style ->
             renderer.ensureDefaultIcon(style)
             ensureGeoJsonSource(style, renderer.markerLayer.sourceId)
             addLayerAboveSafely(

@@ -43,16 +43,24 @@ class MapLibreCircleLayer(
         )
 
     /** 塗りレイヤ。レイヤ順序の互換のため id は従来の layerId を引き継ぐ。 */
-    val layer: FillLayer =
-        FillLayer(layerId, sourceId).apply {
+    // A fresh native layer on every read. MapLibre releases a Layer's core
+    // object into the style it is added to, and the Java object can never be
+    // added again ("Cannot add layer twice") -- so the one built for the
+    // first style was silently refused by every style loaded after it, and
+    // a design change lost the overlays. Only `setupStyle` reads this, once
+    // per style load.
+    val layer: FillLayer
+        get() =
+            FillLayer(layerId, sourceId).apply {
             setProperties(
                 fillColor(Expression.get(Prop.FILL_COLOR)),
                 fillSortKey(Expression.get(Prop.Z_INDEX)),
             )
         }
 
-    val strokeLayer: LineLayer =
-        LineLayer(strokeLayerId, sourceId).apply {
+    val strokeLayer: LineLayer
+        get() =
+            LineLayer(strokeLayerId, sourceId).apply {
             setProperties(
                 lineJoin(Property.LINE_JOIN_ROUND),
                 lineCap(Property.LINE_CAP_ROUND),

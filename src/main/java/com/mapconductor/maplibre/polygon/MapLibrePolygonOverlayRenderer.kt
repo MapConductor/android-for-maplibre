@@ -31,6 +31,14 @@ class MapLibrePolygonOverlayRenderer(
         }
     }
 
+    /** Draws every polygon into the current style again; for after a style load. */
+    fun redraw() {
+        val polygons = getAllPolygonEntities()
+        holder.map.style?.let { style ->
+            coroutine.launch { layer.draw(polygons, style) }
+        }
+    }
+
     override suspend fun onPostProcess() {
         val polygons = getAllPolygonEntities()
 

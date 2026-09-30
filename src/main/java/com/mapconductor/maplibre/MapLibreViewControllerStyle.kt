@@ -157,7 +157,10 @@ internal fun MapLibreViewController.setupStyle(style: Style) {
     (markerController.renderer as MapLibreMarkerOverlayRenderer).redraw()
     circleController.renderer.redraw()
     polylineController.renderer.redraw()
-//        polygonController.polygonOverlay.onPostProcess()
+    // The polygon sources are new and empty on every style; the data has to
+    // be written into them again, like the markers' and the polylines'.
+    polygonController.polygonOverlay.redraw()
+    polygonController.polylineOverlay.redraw()
     mainCoroutine.launch {
         groundImageController.reapplyStyle()
         rasterLayerController.reapplyStyle()

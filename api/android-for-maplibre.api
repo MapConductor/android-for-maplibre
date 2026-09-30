@@ -401,6 +401,7 @@ public final class com.mapconductor.maplibre.polygon.MapLibrePolygonOverlayRende
   public com.mapconductor.maplibre.MapLibreMapViewHolderInterface getHolder();
   public kotlinx.coroutines.CoroutineScope getCoroutine();
   public java.lang.Object onRemove(java.util.List<? extends com.mapconductor.core.polygon.PolygonEntityInterface<java.util.List<org.maplibre.geojson.Feature>>>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public final void redraw();
   public java.lang.Object onPostProcess(kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public java.lang.Object removePolygon(com.mapconductor.core.polygon.PolygonEntityInterface<java.util.List<org.maplibre.geojson.Feature>>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public java.lang.Object createPolygon(com.mapconductor.core.polygon.PolygonState, kotlin.coroutines.Continuation<? super java.util.List<org.maplibre.geojson.Feature>>);
