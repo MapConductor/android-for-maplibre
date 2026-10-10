@@ -10,7 +10,7 @@ kotlin = "2.0.21"
 
 composeBom = "2025.02.00"
 lifecycleRuntimeKtx = "2.8.7"
-mapLibreSdk = "13.3.1"
+mapLibreSdk = "13.6.1"
 mapLibreAnnotation = "3.0.2"
 activityCompose = "1.9.3"
 ktLint = "14.2.0"

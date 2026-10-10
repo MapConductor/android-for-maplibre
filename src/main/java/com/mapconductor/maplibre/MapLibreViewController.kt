@@ -163,12 +163,43 @@ class MapLibreViewController(
      */
     internal fun loadedStyle(): Style? = styleInstance?.takeIf { it.isFullyLoaded }
 
+    /** The document [loadedStyle] was loaded from, and the one asked for. */
+    private var loadedStyleUrl: String? = null
+    private var requestedStyleUrl: String? = null
+
+    /**
+     * Whether the style on screen is the document the map was last asked
+     * for.
+     *
+     * What [MapLibreStyleMutationTarget] answers `isReady` with, and not the
+     * same question as "is a style loaded". A vector style hands over a new
+     * document and then applies the deltas compiled for it; between those
+     * two the map still has the document being replaced, whose layers have
+     * other names, so every delta came back as a property this map
+     * "cannot set by name" -- five hundred of them, while the map itself
+     * looked right because the whole set goes on again at
+     * [styleLoadedListener].
+     */
+    internal fun isShowingRequestedStyle(): Boolean =
+        loadedStyle() != null && loadedStyleUrl == requestedStyleUrl
+
     private var mapDesignTypeChangeListener: MapLibreDesignTypeChangeHandler? = null
 
+    /**
+     * Called once the map has a style up and the overlays are back on it.
+     *
+     * How a vector style adjustment survives a design change: everything it
+     * set is lost with the old style, and this is the moment the new one is
+     * known to be complete.
+     */
+    internal var styleLoadedListener: (() -> Unit)? = null
+
     override fun setMapDesignType(value: MapLibreMapDesignTypeInterface) {
+        requestedStyleUrl = value.styleJsonURL
         mainCoroutine.launch {
             holder.map.setStyle(value.styleJsonURL) { newStyle ->
                 Log.d("MapLibre", "Style changed to ${value.styleJsonURL}")
+                loadedStyleUrl = value.styleJsonURL
                 setupStyle(newStyle)
             }
         }

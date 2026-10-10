@@ -52,23 +52,23 @@ class MapLibreCircleLayer(
     val layer: FillLayer
         get() =
             FillLayer(layerId, sourceId).apply {
-            setProperties(
-                fillColor(Expression.get(Prop.FILL_COLOR)),
-                fillSortKey(Expression.get(Prop.Z_INDEX)),
-            )
-        }
+                setProperties(
+                    fillColor(Expression.get(Prop.FILL_COLOR)),
+                    fillSortKey(Expression.get(Prop.Z_INDEX)),
+                )
+            }
 
     val strokeLayer: LineLayer
         get() =
             LineLayer(strokeLayerId, sourceId).apply {
-            setProperties(
-                lineJoin(Property.LINE_JOIN_ROUND),
-                lineCap(Property.LINE_CAP_ROUND),
-                lineColor(Expression.get(Prop.STROKE_COLOR)),
-                lineWidth(Expression.get(Prop.STROKE_WIDTH)),
-                lineSortKey(Expression.get(Prop.Z_INDEX)),
-            )
-        }
+                setProperties(
+                    lineJoin(Property.LINE_JOIN_ROUND),
+                    lineCap(Property.LINE_CAP_ROUND),
+                    lineColor(Expression.get(Prop.STROKE_COLOR)),
+                    lineWidth(Expression.get(Prop.STROKE_WIDTH)),
+                    lineSortKey(Expression.get(Prop.Z_INDEX)),
+                )
+            }
 
     fun draw(
         entities: List<CircleEntityInterface<MapLibreActualCircle>>,

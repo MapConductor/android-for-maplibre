@@ -38,13 +38,13 @@ class MapLibrePolylineLayer(
     val layer: LineLayer
         get() =
             LineLayer(layerId, sourceId).apply {
-            setProperties(
-                lineJoin(Property.LINE_JOIN_ROUND),
-                lineCap(Property.LINE_CAP_ROUND),
-                lineColor(get(Prop.STROKE_COLOR)),
-                lineWidth(get(Prop.STROKE_WIDTH)),
-            )
-        }
+                setProperties(
+                    lineJoin(Property.LINE_JOIN_ROUND),
+                    lineCap(Property.LINE_CAP_ROUND),
+                    lineColor(get(Prop.STROKE_COLOR)),
+                    lineWidth(get(Prop.STROKE_WIDTH)),
+                )
+            }
 
     fun draw(
         entities: List<PolylineEntityInterface<MapLibreActualPolyline>>,

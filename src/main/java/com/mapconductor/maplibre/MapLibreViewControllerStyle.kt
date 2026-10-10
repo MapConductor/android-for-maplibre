@@ -165,6 +165,10 @@ internal fun MapLibreViewController.setupStyle(style: Style) {
         groundImageController.reapplyStyle()
         rasterLayerController.reapplyStyle()
     }
+    // Last, and after the overlays: anything a vector style adjustment put
+    // on the previous style went with it, and this is the only moment the
+    // new one is known to be complete.
+    styleLoadedListener?.invoke()
 }
 
 internal fun MapLibreViewController.ensurePolygonZLayers(style: Style) {
