@@ -33,10 +33,10 @@ class MapLibrePolygonLayer(
     val layer: FillLayer
         get() =
             FillLayer(layerId, sourceId).apply {
-            setProperties(
-                fillColor(get(Prop.FILL_COLOR)),
-            )
-        }
+                setProperties(
+                    fillColor(get(Prop.FILL_COLOR)),
+                )
+            }
 
     fun draw(
         entities: List<PolygonEntityInterface<MapLibreActualPolygon>>,
