@@ -99,6 +99,14 @@ dependencies {
     } else {
         api("com.mapconductor:compose:$libraryVersion")
     }
+
+    // A real MapView loading real (local) styles: what a design change does to
+    // the overlays only shows on a map that actually swaps its style.
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.runner)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }
 
 // Set project version for NMCP plugin
