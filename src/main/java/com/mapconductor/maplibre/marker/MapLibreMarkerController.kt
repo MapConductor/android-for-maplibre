@@ -247,6 +247,8 @@ class MapLibreMarkerController(
 
     override fun destroy() {
         viewportSwitch.destroy()
+        // 待っている描き直しが後から走ると、外したタイル経路をまた登録してしまう。
+        tileRefreshJob?.cancel()
         // Clean up tile server registration
         // Unregister this map's route only. Never stop the server here: it is
         // a process-wide singleton shared by all map controllers and overlay
