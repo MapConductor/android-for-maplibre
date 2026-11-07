@@ -363,6 +363,8 @@ public final class com.mapconductor.maplibre.polygon.MapLibrePolygonConductor im
   public final com.mapconductor.maplibre.polygon.MapLibrePolygonOverlayRenderer getPolygonOverlay();
   public final com.mapconductor.maplibre.polyline.MapLibrePolylineOverlayRenderer getPolylineOverlay();
   public int getZIndex();
+  public final com.mapconductor.core.polygon.PolygonTiler getTiler();
+  public final void setTiler(com.mapconductor.core.polygon.PolygonTiler);
   public final kotlin.jvm.functions.Function1<com.mapconductor.core.polygon.PolygonEvent, kotlin.Unit> getClickListener();
   public final void setClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.polygon.PolygonEvent, kotlin.Unit>);
   public java.lang.Object add(java.util.List<com.mapconductor.core.polygon.PolygonState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
