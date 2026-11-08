@@ -101,6 +101,15 @@ public final class com.mapconductor.maplibre.MapLibreMapViewSaver extends com.ma
 public final class com.mapconductor.maplibre.MapLibreMapViewScope extends com.mapconductor.compose.MapViewScope {
   public com.mapconductor.maplibre.MapLibreMapViewScope();
 }
+public final class com.mapconductor.maplibre.MapLibreOverlayStacking {
+  public static final com.mapconductor.maplibre.MapLibreOverlayStacking INSTANCE;
+  public final com.mapconductor.core.controller.OverlayLayerStack stackOf(org.maplibre.android.maps.MapLibreMap);
+  public final com.mapconductor.core.controller.OverlayStacking$Key key(com.mapconductor.core.controller.OverlayKind, int);
+  public final com.mapconductor.core.controller.OverlayStacking$Key getMARKER_TILE();
+  public final com.mapconductor.core.controller.OverlayStacking$Key getMARKER_DRAG();
+  public final void add(org.maplibre.android.maps.MapLibreMap, org.maplibre.android.maps.Style, org.maplibre.android.style.layers.Layer, com.mapconductor.core.controller.OverlayStacking$Key);
+  public final void remove(org.maplibre.android.maps.MapLibreMap, org.maplibre.android.maps.Style, java.lang.String);
+}
 public final class com.mapconductor.maplibre.MapLibrePolyUtilsKt {
   public static final java.util.List<org.maplibre.geojson.Feature> createMapLibreLines-rXlOB7A(java.lang.String, java.util.List<? extends com.mapconductor.core.features.GeoPointInterface>, boolean, long, float, int);
   public static final java.lang.String toMapLibreColorString-8_81llA(long);
