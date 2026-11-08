@@ -21,7 +21,10 @@ class MapLibreViewState(
     cameraPosition: MapCameraPosition = MapCameraPosition.Default,
 ) : MapViewState<MapLibreMapDesignTypeInterface>(cameraPosition),
     MapLibreViewStateInterface {
-    private var controller: MapLibreViewControllerInterface? = null
+    // Read through the base so that letting go of the controller there (MapViewBase
+    // does it when the map is torn down) leaves nothing behind here.
+    private val controller: MapLibreViewControllerInterface?
+        get() = attachedMapController as? MapLibreViewControllerInterface
     private var _mapDesignType: MapLibreMapDesignTypeInterface = mapDesignType
 
     override var mapDesignType: MapLibreMapDesignTypeInterface
@@ -32,7 +35,6 @@ class MapLibreViewState(
         get() = _mapDesignType
 
     internal fun setController(controller: MapLibreViewControllerInterface) {
-        this.controller = controller
         attachController(controller)
     }
 
