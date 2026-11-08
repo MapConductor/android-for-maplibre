@@ -23,10 +23,13 @@ class MapLibrePolygonOverlayRenderer(
     override val holder: MapLibreMapViewHolderInterface,
     override val coroutine: CoroutineScope = CoroutineScope(Dispatchers.Main),
 ) : AbstractPolygonOverlayRenderer<MapLibreActualPolygon>() {
+    // 消えた分を除いた残りで描き直す。コントローラはこの呼び出しの後で polygonManager から
+    // 外すので（clear() では onPostProcess も来ない）、ここで除外しておかないと消えずに残る。
     override suspend fun onRemove(data: List<PolygonEntityInterface<MapLibreActualPolygon>>) {
-        coroutine.launch {
-            holder.map.style?.let {
-                layer.draw(getAllPolygonEntities(), it)
+        val polygons = getRemainingPolygonEntities(data)
+        holder.map.style?.let {
+            coroutine.launch {
+                layer.draw(polygons, it)
             }
         }
     }
@@ -87,4 +90,11 @@ class MapLibrePolygonOverlayRenderer(
 
     private fun getAllPolygonEntities(): List<PolygonEntityInterface<MapLibreActualPolygon>> =
         polygonManager.allEntities()
+
+    private fun getRemainingPolygonEntities(
+        removed: List<PolygonEntityInterface<MapLibreActualPolygon>>,
+    ): List<PolygonEntityInterface<MapLibreActualPolygon>> {
+        val removedIds = removed.mapTo(HashSet()) { it.state.id }
+        return polygonManager.allEntities().filter { it.state.id !in removedIds }
+    }
 }

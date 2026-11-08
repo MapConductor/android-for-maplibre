@@ -25,7 +25,7 @@ import com.mapconductor.maplibre.marker.MapLibreMarkerController
 import com.mapconductor.maplibre.marker.MapLibreMarkerOverlayRenderer
 import com.mapconductor.maplibre.marker.MarkerDragLayer
 import com.mapconductor.maplibre.marker.MarkerLayer
-import com.mapconductor.maplibre.polygon.MapLibrePolygonConductor
+import com.mapconductor.maplibre.polygon.MapLibrePolygonController
 import com.mapconductor.maplibre.polyline.MapLibrePolylineController
 import com.mapconductor.maplibre.raster.MapLibreRasterLayerController
 import org.maplibre.android.geometry.LatLng
@@ -46,7 +46,7 @@ class MapLibreViewController(
     override val holder: MapLibreMapViewHolderInterface,
     internal val markerController: MapLibreMarkerController,
     internal val polylineController: MapLibrePolylineController,
-    internal val polygonController: MapLibrePolygonConductor,
+    internal val polygonController: MapLibrePolygonController,
     internal val groundImageController: MapLibreGroundImageController,
     internal val circleController: MapLibreCircleController,
     internal val rasterLayerController: MapLibreRasterLayerController,
