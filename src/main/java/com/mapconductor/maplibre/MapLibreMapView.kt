@@ -38,7 +38,8 @@ import com.mapconductor.maplibre.marker.MapLibreMarkerController
 import com.mapconductor.maplibre.marker.MapLibreMarkerOverlayRenderer
 import com.mapconductor.maplibre.marker.MarkerDragLayer
 import com.mapconductor.maplibre.marker.MarkerLayer
-import com.mapconductor.maplibre.polygon.MapLibrePolygonConductor
+import com.mapconductor.maplibre.polygon.MapLibrePolygonCompositeRenderer
+import com.mapconductor.maplibre.polygon.MapLibrePolygonController
 import com.mapconductor.maplibre.polygon.MapLibrePolygonLayer
 import com.mapconductor.maplibre.polygon.MapLibrePolygonOverlayRenderer
 import com.mapconductor.maplibre.polyline.MapLibrePolylineController
@@ -314,7 +315,7 @@ fun getPolylineController(holder: MapLibreMapViewHolderInterface): MapLibrePolyl
     return controller
 }
 
-fun getPolygonController(holder: MapLibreMapViewHolderInterface): MapLibrePolygonConductor {
+fun getPolygonController(holder: MapLibreMapViewHolderInterface): MapLibrePolygonController {
     val polylineLayer =
         MapLibrePolylineLayer(
             sourceId = "polygon-outline-source",
@@ -341,9 +342,12 @@ fun getPolygonController(holder: MapLibreMapViewHolderInterface): MapLibrePolygo
             holder = holder,
         )
 
-    return MapLibrePolygonConductor(
-        polygonOverlay = polygonOverlayRenderer,
-        polylineOverlay = polylineOverlayRenderer,
+    return MapLibrePolygonController(
+        renderer =
+            MapLibrePolygonCompositeRenderer(
+                fill = polygonOverlayRenderer,
+                outline = polylineOverlayRenderer,
+            ),
     )
 }
 

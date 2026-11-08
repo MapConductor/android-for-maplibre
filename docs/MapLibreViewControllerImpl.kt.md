@@ -14,7 +14,7 @@ class MapLibreViewController(
     override val holder: MapLibreMapViewHolderInterface,
     private val markerController: MapLibreMarkerController,
     private val polylineController: MapLibrePolylineController,
-    private val polygonController: MapLibrePolygonConductor,
+    private val polygonController: MapLibrePolygonController,
     private val groundImageController: MapLibreGroundImageController,
     private val circleController: MapLibreCircleController,
     private val rasterLayerController: MapLibreRasterLayerController,
@@ -39,7 +39,7 @@ Initializes a new instance of the `MapLibreViewController`.
     - Type: `MapLibrePolylineController`
     - Description: The controller responsible for managing polylines.
 - `polygonController`
-    - Type: `MapLibrePolygonConductor`
+    - Type: `MapLibrePolygonController`
     - Description: The controller responsible for managing polygons.
 - `groundImageController`
     - Type: `MapLibreGroundImageController`

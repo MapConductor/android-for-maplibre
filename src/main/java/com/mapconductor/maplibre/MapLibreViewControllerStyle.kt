@@ -81,8 +81,8 @@ internal fun MapLibreViewController.setupStyle(style: Style) {
     (markerController.renderer as MapLibreMarkerOverlayRenderer).ensureDefaultIcon(style)
 
     // Polygon sources only (layers will be added per zIndex)
-    ensureGeoJsonSource(style, polygonController.polylineOverlay.layer.sourceId)
-    ensureGeoJsonSource(style, polygonController.polygonOverlay.layer.sourceId)
+    ensureGeoJsonSource(style, polygonController.renderer.outline.layer.sourceId)
+    ensureGeoJsonSource(style, polygonController.renderer.fill.layer.sourceId)
 
     // Circle cts as anchor above polygons
     ensureGeoJsonSource(style, circleController.renderer.layer.sourceId)
@@ -159,8 +159,8 @@ internal fun MapLibreViewController.setupStyle(style: Style) {
     polylineController.renderer.redraw()
     // The polygon sources are new and empty on every style; the data has to
     // be written into them again, like the markers' and the polylines'.
-    polygonController.polygonOverlay.redraw()
-    polygonController.polylineOverlay.redraw()
+    polygonController.renderer.fill.redraw()
+    polygonController.renderer.outline.redraw()
     mainCoroutine.launch {
         groundImageController.reapplyStyle()
         rasterLayerController.reapplyStyle()
@@ -172,12 +172,12 @@ internal fun MapLibreViewController.setupStyle(style: Style) {
 }
 
 internal fun MapLibreViewController.ensurePolygonZLayers(style: Style) {
-    val fillSourceId = polygonController.polygonOverlay.layer.sourceId
-    val outlineSourceId = polygonController.polylineOverlay.layer.sourceId
+    val fillSourceId = polygonController.renderer.fill.layer.sourceId
+    val outlineSourceId = polygonController.renderer.outline.layer.sourceId
     val anchorId = polylineController.renderer.layer.layerId
 
     val zSet =
-        polygonController.polygonOverlay.polygonManager
+        polygonController.polygonManager
             .allEntities()
             .map { it.state.zIndex }
             .toSet()
