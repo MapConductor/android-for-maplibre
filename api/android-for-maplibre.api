@@ -83,7 +83,7 @@ public final class com.mapconductor.maplibre.MapLibreMapViewKt {
   public static final com.mapconductor.maplibre.MapLibreViewController createMapLibreViewController(com.mapconductor.maplibre.MapLibreMapViewHolderInterface, com.mapconductor.core.marker.MarkerTilingOptions, com.mapconductor.core.map.MutableMapServiceRegistry);
   public static final com.mapconductor.maplibre.marker.MapLibreMarkerController getMarkerController(com.mapconductor.maplibre.MapLibreMapViewHolderInterface, com.mapconductor.core.marker.MarkerTilingOptions);
   public static final com.mapconductor.maplibre.polyline.MapLibrePolylineController getPolylineController(com.mapconductor.maplibre.MapLibreMapViewHolderInterface);
-  public static final com.mapconductor.maplibre.polygon.MapLibrePolygonConductor getPolygonController(com.mapconductor.maplibre.MapLibreMapViewHolderInterface);
+  public static final com.mapconductor.maplibre.polygon.MapLibrePolygonController getPolygonController(com.mapconductor.maplibre.MapLibreMapViewHolderInterface);
   public static final com.mapconductor.maplibre.circle.MapLibreCircleController getCircleController(com.mapconductor.maplibre.MapLibreMapViewHolderInterface);
   public static final com.mapconductor.maplibre.raster.MapLibreRasterLayerController getRasterLayerController(com.mapconductor.maplibre.MapLibreMapViewHolderInterface);
   public static final com.mapconductor.maplibre.groundimage.MapLibreGroundImageController getGroundImageController(com.mapconductor.maplibre.MapLibreMapViewHolderInterface);
@@ -101,6 +101,15 @@ public final class com.mapconductor.maplibre.MapLibreMapViewSaver extends com.ma
 public final class com.mapconductor.maplibre.MapLibreMapViewScope extends com.mapconductor.compose.MapViewScope {
   public com.mapconductor.maplibre.MapLibreMapViewScope();
 }
+public final class com.mapconductor.maplibre.MapLibreOverlayStacking {
+  public static final com.mapconductor.maplibre.MapLibreOverlayStacking INSTANCE;
+  public final com.mapconductor.core.controller.OverlayLayerStack stackOf(org.maplibre.android.maps.MapLibreMap);
+  public final com.mapconductor.core.controller.OverlayStacking$Key key(com.mapconductor.core.controller.OverlayKind, int);
+  public final com.mapconductor.core.controller.OverlayStacking$Key getMARKER_TILE();
+  public final com.mapconductor.core.controller.OverlayStacking$Key getMARKER_DRAG();
+  public final void add(org.maplibre.android.maps.MapLibreMap, org.maplibre.android.maps.Style, org.maplibre.android.style.layers.Layer, com.mapconductor.core.controller.OverlayStacking$Key);
+  public final void remove(org.maplibre.android.maps.MapLibreMap, org.maplibre.android.maps.Style, java.lang.String);
+}
 public final class com.mapconductor.maplibre.MapLibrePolyUtilsKt {
   public static final java.util.List<org.maplibre.geojson.Feature> createMapLibreLines-rXlOB7A(java.lang.String, java.util.List<? extends com.mapconductor.core.features.GeoPointInterface>, boolean, long, float, int);
   public static final java.lang.String toMapLibreColorString-8_81llA(long);
@@ -109,8 +118,8 @@ public final class com.mapconductor.maplibre.MapLibrePolyUtilsKt {
 public final class com.mapconductor.maplibre.MapLibreTypeAliasKt {
 }
 public final class com.mapconductor.maplibre.MapLibreViewController extends com.mapconductor.core.controller.BaseMapViewController implements com.mapconductor.maplibre.MapLibreViewControllerInterface,org.maplibre.android.maps.MapLibreMap$OnMapClickListener,org.maplibre.android.maps.MapLibreMap$OnMapLongClickListener,org.maplibre.android.maps.MapLibreMap$OnMoveListener,org.maplibre.android.maps.MapLibreMap$OnCameraMoveListener,org.maplibre.android.maps.MapLibreMap$OnCameraIdleListener {
-  public com.mapconductor.maplibre.MapLibreViewController(com.mapconductor.maplibre.MapLibreMapViewHolderInterface, com.mapconductor.maplibre.marker.MapLibreMarkerController, com.mapconductor.maplibre.polyline.MapLibrePolylineController, com.mapconductor.maplibre.polygon.MapLibrePolygonConductor, com.mapconductor.maplibre.groundimage.MapLibreGroundImageController, com.mapconductor.maplibre.circle.MapLibreCircleController, com.mapconductor.maplibre.raster.MapLibreRasterLayerController, kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineScope);
-  public com.mapconductor.maplibre.MapLibreViewController(com.mapconductor.maplibre.MapLibreMapViewHolderInterface, com.mapconductor.maplibre.marker.MapLibreMarkerController, com.mapconductor.maplibre.polyline.MapLibrePolylineController, com.mapconductor.maplibre.polygon.MapLibrePolygonConductor, com.mapconductor.maplibre.groundimage.MapLibreGroundImageController, com.mapconductor.maplibre.circle.MapLibreCircleController, com.mapconductor.maplibre.raster.MapLibreRasterLayerController, kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineScope, int, kotlin.jvm.internal.DefaultConstructorMarker);
+  public com.mapconductor.maplibre.MapLibreViewController(com.mapconductor.maplibre.MapLibreMapViewHolderInterface, com.mapconductor.maplibre.marker.MapLibreMarkerController, com.mapconductor.maplibre.polyline.MapLibrePolylineController, com.mapconductor.maplibre.polygon.MapLibrePolygonController, com.mapconductor.maplibre.groundimage.MapLibreGroundImageController, com.mapconductor.maplibre.circle.MapLibreCircleController, com.mapconductor.maplibre.raster.MapLibreRasterLayerController, kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineScope);
+  public com.mapconductor.maplibre.MapLibreViewController(com.mapconductor.maplibre.MapLibreMapViewHolderInterface, com.mapconductor.maplibre.marker.MapLibreMarkerController, com.mapconductor.maplibre.polyline.MapLibrePolylineController, com.mapconductor.maplibre.polygon.MapLibrePolygonController, com.mapconductor.maplibre.groundimage.MapLibreGroundImageController, com.mapconductor.maplibre.circle.MapLibreCircleController, com.mapconductor.maplibre.raster.MapLibreRasterLayerController, kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.CoroutineScope, int, kotlin.jvm.internal.DefaultConstructorMarker);
   public com.mapconductor.maplibre.MapLibreMapViewHolderInterface getHolder();
   public kotlinx.coroutines.CoroutineScope getMainCoroutine();
   public kotlinx.coroutines.CoroutineScope getDefaultCoroutine();
@@ -358,29 +367,22 @@ public class com.mapconductor.maplibre.marker.MarkerLayer {
   public final boolean wouldSkipDraw(java.util.List<? extends com.mapconductor.core.marker.MarkerEntityInterface<org.maplibre.geojson.Feature>>);
   public final void draw(java.util.List<? extends com.mapconductor.core.marker.MarkerEntityInterface<org.maplibre.geojson.Feature>>, org.maplibre.android.maps.Style);
 }
-public final class com.mapconductor.maplibre.polygon.MapLibrePolygonConductor implements com.mapconductor.core.controller.SlottedOverlayController<com.mapconductor.core.polygon.PolygonState, com.mapconductor.core.polygon.PolygonEntityInterface<com.mapconductor.core.polygon.PolygonState>> {
-  public com.mapconductor.maplibre.polygon.MapLibrePolygonConductor(com.mapconductor.maplibre.polygon.MapLibrePolygonOverlayRenderer, com.mapconductor.maplibre.polyline.MapLibrePolylineOverlayRenderer);
-  public final com.mapconductor.maplibre.polygon.MapLibrePolygonOverlayRenderer getPolygonOverlay();
-  public final com.mapconductor.maplibre.polyline.MapLibrePolylineOverlayRenderer getPolylineOverlay();
-  public int getZIndex();
-  public final com.mapconductor.core.polygon.PolygonTiler getTiler();
-  public final void setTiler(com.mapconductor.core.polygon.PolygonTiler);
-  public final kotlin.jvm.functions.Function1<com.mapconductor.core.polygon.PolygonEvent, kotlin.Unit> getClickListener();
-  public final void setClickListener(kotlin.jvm.functions.Function1<? super com.mapconductor.core.polygon.PolygonEvent, kotlin.Unit>);
-  public java.lang.Object add(java.util.List<com.mapconductor.core.polygon.PolygonState>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public java.lang.Object update(com.mapconductor.core.polygon.PolygonState, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public final void dispatchClick(com.mapconductor.core.polygon.PolygonEvent);
-  public com.mapconductor.core.polygon.PolygonEntityInterface<com.mapconductor.core.polygon.PolygonState> find(com.mapconductor.core.features.GeoPointInterface);
-  public java.lang.Object clear(kotlin.coroutines.Continuation<? super kotlin.Unit>);
-  public com.mapconductor.core.controller.OverlayKind getKind();
-  public boolean has(java.lang.String);
-  public void setClickListenerAny(java.lang.Object);
-  public com.mapconductor.core.controller.OverlayHit resolveTap(com.mapconductor.core.features.GeoPointInterface);
-  public void destroy();
-  public java.lang.Object update(java.lang.Object, kotlin.coroutines.Continuation);
-  public java.lang.Object find(com.mapconductor.core.features.GeoPointInterface);
+public final class com.mapconductor.maplibre.polygon.MapLibrePolygonCompositeRenderer implements com.mapconductor.core.polygon.PolygonOverlayRendererInterface<java.util.List<? extends org.maplibre.geojson.Feature>> {
+  public com.mapconductor.maplibre.polygon.MapLibrePolygonCompositeRenderer(com.mapconductor.maplibre.polygon.MapLibrePolygonOverlayRenderer, com.mapconductor.maplibre.polyline.MapLibrePolylineOverlayRenderer);
+  public final com.mapconductor.maplibre.polygon.MapLibrePolygonOverlayRenderer getFill();
+  public final com.mapconductor.maplibre.polyline.MapLibrePolylineOverlayRenderer getOutline();
+  public java.lang.Object onAdd(java.util.List<? extends com.mapconductor.core.polygon.PolygonOverlayRendererInterface$AddParamsInterface>, kotlin.coroutines.Continuation<? super java.util.List<? extends java.util.List<org.maplibre.geojson.Feature>>>);
+  public java.lang.Object onChange(java.util.List<? extends com.mapconductor.core.polygon.PolygonOverlayRendererInterface$ChangeParamsInterface<java.util.List<org.maplibre.geojson.Feature>>>, kotlin.coroutines.Continuation<? super java.util.List<? extends java.util.List<org.maplibre.geojson.Feature>>>);
+  public java.lang.Object onRemove(java.util.List<? extends com.mapconductor.core.polygon.PolygonEntityInterface<java.util.List<org.maplibre.geojson.Feature>>>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+  public java.lang.Object onPostProcess(kotlin.coroutines.Continuation<? super kotlin.Unit>);
 }
-public final class com.mapconductor.maplibre.polygon.MapLibrePolygonConductorKt {
+public final class com.mapconductor.maplibre.polygon.MapLibrePolygonCompositeRendererKt {
+}
+public final class com.mapconductor.maplibre.polygon.MapLibrePolygonController extends com.mapconductor.core.polygon.PolygonController<java.util.List<? extends org.maplibre.geojson.Feature>> {
+  public com.mapconductor.maplibre.polygon.MapLibrePolygonController(com.mapconductor.maplibre.polygon.MapLibrePolygonCompositeRenderer);
+  public com.mapconductor.maplibre.polygon.MapLibrePolygonCompositeRenderer getRenderer();
+  public int getZIndex();
+  public com.mapconductor.core.polygon.PolygonOverlayRendererInterface getRenderer();
 }
 public final class com.mapconductor.maplibre.polygon.MapLibrePolygonLayer {
   public com.mapconductor.maplibre.polygon.MapLibrePolygonLayer(java.lang.String, java.lang.String);

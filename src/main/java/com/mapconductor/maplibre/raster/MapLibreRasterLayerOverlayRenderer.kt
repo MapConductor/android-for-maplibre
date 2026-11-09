@@ -1,5 +1,6 @@
 package com.mapconductor.maplibre.raster
 
+import com.mapconductor.core.controller.OverlayKind
 import com.mapconductor.core.polygon.POLYGON_TILE_LAYER_ID
 import com.mapconductor.core.raster.RasterLayerEntityInterface
 import com.mapconductor.core.raster.RasterLayerOverlayRendererInterface
@@ -7,6 +8,7 @@ import com.mapconductor.core.raster.RasterLayerSource
 import com.mapconductor.core.raster.RasterLayerState
 import com.mapconductor.core.raster.TileScheme
 import com.mapconductor.maplibre.MapLibreMapViewHolderInterface
+import com.mapconductor.maplibre.MapLibreOverlayStacking
 import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.RasterLayer
@@ -96,60 +98,29 @@ class MapLibreRasterLayerOverlayRenderer(
         } catch (e: Exception) {
             Log.w("MapLibre", "Failed to add raster source: ${e.message}")
         }
-        try {
-            if (isMarkerTileRaster(state)) {
-                addLayerForMarkerTile(style, layer)
-            } else if (isPolygonTileRaster(state)) {
-                addLayerForPolygonTile(style, layer)
-            } else {
-                style.addLayer(layer)
-            }
-        } catch (e: Exception) {
-            Log.w("MapLibre", "Failed to add raster layer: ${e.message}")
-        }
+        addToStack(style, layer, state)
         return handle
     }
 
     /**
-     * The polygon tiles are polygons drawn as images, not imagery: they go
-     * where the SDK's own polygon layers do, over the basemap and under
-     * polylines and markers -- below the first of those in the style.
+     * 帯の順（[MapLibreOverlayStacking]）で足す。アプリのラスターはラスターの帯
+     * （一番下、ベースマップのラベルの下）、マーカーのタイルはマーカーの帯の一番下、
+     * ポリゴンのタイルはポリゴンの帯の一番下（画像になったポリゴンであって、地図の画像ではない）。
      */
-    private fun addLayerForPolygonTile(
+    private fun addToStack(
         style: org.maplibre.android.maps.Style,
         layer: RasterLayer,
+        state: RasterLayerState,
     ) {
-        val anchor = style.layers.map { it.id }.firstOrNull { id -> POLYGON_TILE_ANCHOR_PREFIXES.any { id.startsWith(it) } }
-        if (anchor != null) {
-            try {
-                style.addLayerBelow(layer, anchor)
-                return
-            } catch (_: Exception) {
+        val key =
+            if (isMarkerTileRaster(state)) {
+                MapLibreOverlayStacking.MARKER_TILE
+            } else if (isPolygonTileRaster(state)) {
+                MapLibreOverlayStacking.POLYGON_TILE
+            } else {
+                MapLibreOverlayStacking.key(OverlayKind.RasterLayer, state.zIndex)
             }
-        }
-        style.addLayer(layer)
-    }
-
-    private fun addLayerForMarkerTile(
-        style: org.maplibre.android.maps.Style,
-        layer: RasterLayer,
-    ) {
-        // Insert the raster tiles below the marker symbol layer so they don't cover markers,
-        // but remain above vector overlays that are anchored below markers (polyline/circle/etc).
-        try {
-            style.addLayerBelow(layer, MARKERS_LAYER_ID)
-            return
-        } catch (_: Exception) {
-        }
-
-        // Best-effort fallback: place above polylines if marker layer isn't present yet.
-        try {
-            style.addLayerAbove(layer, POLYLINE_LAYER_ID)
-            return
-        } catch (_: Exception) {
-        }
-
-        style.addLayer(layer)
+        MapLibreOverlayStacking.add(holder.map, style, layer, key)
     }
 
     private fun updateLayer(
@@ -170,10 +141,7 @@ class MapLibreRasterLayerOverlayRenderer(
     private fun removeLayer(entity: RasterLayerEntityInterface<MapLibreRasterLayerHandle>) {
         val style = holder.map.style ?: return
         val handle = entity.layer
-        try {
-            style.removeLayer(handle.layerId)
-        } catch (_: Exception) {
-        }
+        MapLibreOverlayStacking.remove(holder.map, style, handle.layerId)
         try {
             style.removeSource(handle.sourceId)
         } catch (_: Exception) {
@@ -189,11 +157,10 @@ class MapLibreRasterLayerOverlayRenderer(
                 .mapNotNull { state -> handleById[state.id]?.let { handle -> state to handle } }
                 .toList()
 
+        // zIndex が変わったときのために、いったん外して zIndex の順に入れ直す
+        // （同じ zIndex なら渡された順）。位置は帯の順で決まる。
         ordered.forEach { (_, handle) ->
-            try {
-                style.removeLayer(handle.layerId)
-            } catch (_: Exception) {
-            }
+            MapLibreOverlayStacking.remove(holder.map, style, handle.layerId)
         }
 
         ordered.forEach { (state, handle) ->
@@ -205,58 +172,9 @@ class MapLibreRasterLayerOverlayRenderer(
                     if (state.visible) Property.VISIBLE else Property.NONE,
                 ),
             )
-            try {
-                addBelowBasemapLabels(style, layer)
-            } catch (_: Exception) {
-            }
+            addToStack(style, layer, state)
         }
     }
-
-    /**
-     * Puts a raster layer above the basemap's geometry but **below its labels**.
-     *
-     * Appended at the top of the style instead, a raster overlay covers the
-     * place names, road names and shields the backend draws — a vector tile
-     * layer's own roads run straight through them, which is what "the labels
-     * are under the lines" looks like. Every raster overlay we add has the
-     * same problem, so the rule lives here rather than in each of them.
-     *
-     * Inserting successive layers below the same anchor keeps their order:
-     * each one lands directly below the anchor, which is directly above the
-     * one inserted before it. So callers can hand them over in ascending
-     * z-order, as [rebuildNonMarkerRasterLayers] does.
-     *
-     * Anything of ours is skipped when looking for the anchor. Markers are a
-     * symbol layer too, and anchoring to them would put the raster back above
-     * the labels — with the added twist of only doing so once a marker exists.
-     */
-    private fun addBelowBasemapLabels(
-        style: org.maplibre.android.maps.Style,
-        layer: RasterLayer,
-    ) {
-        val anchor =
-            style.layers.firstOrNull {
-                it is org.maplibre.android.style.layers.SymbolLayer && !isOursById(it.id)
-            }
-        if (anchor == null) {
-            style.addLayer(layer)
-            return
-        }
-        try {
-            style.addLayerBelow(layer, anchor.id)
-        } catch (_: Exception) {
-            style.addLayer(layer)
-        }
-    }
-
-    /** True for layers this SDK adds, as opposed to the design's own. */
-    private fun isOursById(id: String): Boolean =
-        id.startsWith("raster-layer-") ||
-            id.startsWith("org.maplibre.annotations") ||
-            id.startsWith(MARKERS_LAYER_ID) ||
-            id.startsWith("marker-drag-layer") ||
-            id.startsWith(POLYLINE_LAYER_ID) ||
-            id.startsWith("circle-layer")
 
     private fun buildSource(
         sourceId: String,
@@ -285,12 +203,6 @@ class MapLibreRasterLayerOverlayRenderer(
 
     private companion object {
         private const val MARKER_TILE_RASTER_ID_PREFIX = "marker-tile-"
-        private const val MARKERS_LAYER_ID = "markers-layer"
-        private const val POLYLINE_LAYER_ID = "polyline-layer"
-
-        /** The SDK's own layers the polygon tiles go below, whichever comes first in the style. */
-        private val POLYGON_TILE_ANCHOR_PREFIXES =
-            listOf("polygon-fill-layer", "polygon-outline-layer", POLYLINE_LAYER_ID, "raster-layer-marker-tile-", MARKERS_LAYER_ID)
     }
 }
 

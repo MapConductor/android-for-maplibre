@@ -1,5 +1,6 @@
 package com.mapconductor.maplibre.groundimage
 
+import com.mapconductor.core.controller.OverlayKind
 import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.groundimage.AbstractGroundImageOverlayRenderer
 import com.mapconductor.core.groundimage.GroundImageEntityInterface
@@ -7,6 +8,7 @@ import com.mapconductor.core.groundimage.GroundImageFingerPrint
 import com.mapconductor.core.groundimage.GroundImageState
 import com.mapconductor.maplibre.MapLibreActualGroundImage
 import com.mapconductor.maplibre.MapLibreMapViewHolderInterface
+import com.mapconductor.maplibre.MapLibreOverlayStacking
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.geometry.LatLngQuad
 import org.maplibre.android.maps.Style
@@ -104,25 +106,20 @@ class MapLibreGroundImageOverlayRenderer(
             Log.w("MapLibre", "Failed to add ground image source: ${e.message}")
         }
 
-        try {
-            style.addLayerBelow(layer, BELOW_LAYER_ID)
-        } catch (_: Exception) {
-            try {
-                style.addLayer(layer)
-            } catch (e: Exception) {
-                Log.w("MapLibre", "Failed to add ground image layer: ${e.message}")
-            }
-        }
+        // GroundImage の帯（ラスターの上、ポリゴンの下）。送り直しても同じ位置。
+        MapLibreOverlayStacking.add(
+            holder.map,
+            style,
+            layer,
+            MapLibreOverlayStacking.key(OverlayKind.GroundImage),
+        )
     }
 
     private fun removeSourceAndLayerIfExists(
         style: Style,
         handle: MapLibreGroundImageHandle,
     ) {
-        try {
-            style.removeLayer(handle.layerId)
-        } catch (_: Exception) {
-        }
+        MapLibreOverlayStacking.remove(holder.map, style, handle.layerId)
         try {
             style.removeSource(handle.sourceId)
         } catch (_: Exception) {
@@ -185,7 +182,6 @@ class MapLibreGroundImageOverlayRenderer(
             opacity = opacity,
         )
 
-    companion object {
-        private const val BELOW_LAYER_ID = "polyline-layer"
-    }
+    // 公開 API（Companion）の互換のために残している。
+    companion object
 }

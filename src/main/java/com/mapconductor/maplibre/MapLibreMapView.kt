@@ -38,7 +38,8 @@ import com.mapconductor.maplibre.marker.MapLibreMarkerController
 import com.mapconductor.maplibre.marker.MapLibreMarkerOverlayRenderer
 import com.mapconductor.maplibre.marker.MarkerDragLayer
 import com.mapconductor.maplibre.marker.MarkerLayer
-import com.mapconductor.maplibre.polygon.MapLibrePolygonConductor
+import com.mapconductor.maplibre.polygon.MapLibrePolygonCompositeRenderer
+import com.mapconductor.maplibre.polygon.MapLibrePolygonController
 import com.mapconductor.maplibre.polygon.MapLibrePolygonLayer
 import com.mapconductor.maplibre.polygon.MapLibrePolygonOverlayRenderer
 import com.mapconductor.maplibre.polyline.MapLibrePolylineController
@@ -202,6 +203,11 @@ fun MapLibreMapView(
         // For now, assuming content relates to overlay definitions.
         style = style,
         onStyleDiagnostics = onStyleDiagnostics,
+        // Never started (onStart is not called), so it is not stopped either --
+        // MapView.onStop() would deactivate the shared FileSource the next map
+        // still uses. Destroying it ends the render thread, whose camera
+        // listeners otherwise keep the controller and every overlay alive.
+        onDestroyMapView = { mapView -> mapView.onDestroy() },
         content = content, // This might need adjustment based on how overlays are handled
     )
 }
@@ -314,7 +320,7 @@ fun getPolylineController(holder: MapLibreMapViewHolderInterface): MapLibrePolyl
     return controller
 }
 
-fun getPolygonController(holder: MapLibreMapViewHolderInterface): MapLibrePolygonConductor {
+fun getPolygonController(holder: MapLibreMapViewHolderInterface): MapLibrePolygonController {
     val polylineLayer =
         MapLibrePolylineLayer(
             sourceId = "polygon-outline-source",
@@ -341,9 +347,12 @@ fun getPolygonController(holder: MapLibreMapViewHolderInterface): MapLibrePolygo
             holder = holder,
         )
 
-    return MapLibrePolygonConductor(
-        polygonOverlay = polygonOverlayRenderer,
-        polylineOverlay = polylineOverlayRenderer,
+    return MapLibrePolygonController(
+        renderer =
+            MapLibrePolygonCompositeRenderer(
+                fill = polygonOverlayRenderer,
+                outline = polylineOverlayRenderer,
+            ),
     )
 }
 
