@@ -106,6 +106,7 @@ public final class com.mapconductor.maplibre.MapLibreOverlayStacking {
   public final com.mapconductor.core.controller.OverlayLayerStack stackOf(org.maplibre.android.maps.MapLibreMap);
   public final com.mapconductor.core.controller.OverlayStacking$Key key(com.mapconductor.core.controller.OverlayKind, int);
   public final com.mapconductor.core.controller.OverlayStacking$Key getMARKER_TILE();
+  public final com.mapconductor.core.controller.OverlayStacking$Key getPOLYGON_TILE();
   public final com.mapconductor.core.controller.OverlayStacking$Key getMARKER_DRAG();
   public final void add(org.maplibre.android.maps.MapLibreMap, org.maplibre.android.maps.Style, org.maplibre.android.style.layers.Layer, com.mapconductor.core.controller.OverlayStacking$Key);
   public final void remove(org.maplibre.android.maps.MapLibreMap, org.maplibre.android.maps.Style, java.lang.String);
@@ -305,6 +306,9 @@ public final class com.mapconductor.maplibre.marker.MapLibreMarkerController ext
   public void destroy();
   public java.lang.Object update(java.lang.Object, kotlin.coroutines.Continuation);
 }
+final class com.mapconductor.maplibre.marker.MapLibreMarkerController$Companion {
+  public final long getTILE_REFRESH_COALESCE-UwyO8pc();
+}
 public final class com.mapconductor.maplibre.marker.MapLibreMarkerOverlayRenderer extends com.mapconductor.core.marker.AbstractMarkerOverlayRenderer<com.mapconductor.maplibre.MapLibreMapViewHolderInterface, org.maplibre.geojson.Feature> {
   public com.mapconductor.maplibre.marker.MapLibreMarkerOverlayRenderer(com.mapconductor.maplibre.MapLibreMapViewHolderInterface, com.mapconductor.core.marker.MarkerManager<org.maplibre.geojson.Feature>, com.mapconductor.maplibre.marker.MarkerLayer, com.mapconductor.maplibre.marker.MarkerDragLayer, kotlinx.coroutines.CoroutineScope);
   public com.mapconductor.maplibre.marker.MapLibreMarkerOverlayRenderer(com.mapconductor.maplibre.MapLibreMapViewHolderInterface, com.mapconductor.core.marker.MarkerManager, com.mapconductor.maplibre.marker.MarkerLayer, com.mapconductor.maplibre.marker.MarkerDragLayer, kotlinx.coroutines.CoroutineScope, int, kotlin.jvm.internal.DefaultConstructorMarker);
@@ -382,6 +386,7 @@ public final class com.mapconductor.maplibre.polygon.MapLibrePolygonController e
   public com.mapconductor.maplibre.polygon.MapLibrePolygonController(com.mapconductor.maplibre.polygon.MapLibrePolygonCompositeRenderer);
   public com.mapconductor.maplibre.polygon.MapLibrePolygonCompositeRenderer getRenderer();
   public int getZIndex();
+  public void destroy();
   public com.mapconductor.core.polygon.PolygonOverlayRendererInterface getRenderer();
 }
 public final class com.mapconductor.maplibre.polygon.MapLibrePolygonLayer {
