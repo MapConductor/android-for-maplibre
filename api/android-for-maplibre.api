@@ -107,6 +107,7 @@ public final class com.mapconductor.maplibre.MapLibreOverlayStacking {
   public final com.mapconductor.core.controller.OverlayStacking$Key key(com.mapconductor.core.controller.OverlayKind, int);
   public final com.mapconductor.core.controller.OverlayStacking$Key getMARKER_TILE();
   public final com.mapconductor.core.controller.OverlayStacking$Key getPOLYGON_TILE();
+  public final com.mapconductor.core.controller.OverlayStacking$Key getPOLYLINE_TILE();
   public final com.mapconductor.core.controller.OverlayStacking$Key getMARKER_DRAG();
   public final void add(org.maplibre.android.maps.MapLibreMap, org.maplibre.android.maps.Style, org.maplibre.android.style.layers.Layer, com.mapconductor.core.controller.OverlayStacking$Key);
   public final void remove(org.maplibre.android.maps.MapLibreMap, org.maplibre.android.maps.Style, java.lang.String);
