@@ -17,7 +17,10 @@ import com.mapconductor.core.marker.OnMarkerEventHandler
 import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.marker.dispatchGeoMarkerClick
 import com.mapconductor.core.polygon.OnPolygonEventHandler
+import com.mapconductor.core.polygon.POLYGON_TILE_LAYER_ID
 import com.mapconductor.core.polygon.PolygonState
+import com.mapconductor.core.polygon.PolygonTiler
+import com.mapconductor.core.polygon.polygonTileRasterLayerState
 import com.mapconductor.core.polyline.OnPolylineEventHandler
 import com.mapconductor.maplibre.circle.MapLibreCircleController
 import com.mapconductor.maplibre.groundimage.MapLibreGroundImageController
@@ -104,6 +107,19 @@ class MapLibreViewController(
                 markerTileLayers.forEach { entity -> rasterLayerController.removeById(entity.state.id) }
             }
         }
+
+        // Many polygons are drawn as raster tiles, shown through the same RasterLayer
+        // controller as the marker tiles (upsert / removeById, never the app's layers).
+        polygonController.tiler =
+            PolygonTiler().apply {
+                onTemplate = { template, tileSize ->
+                    if (template != null) {
+                        rasterLayerController.upsert(polygonTileRasterLayerState(template, tileSize))
+                    } else {
+                        rasterLayerController.removeById(POLYGON_TILE_LAYER_ID)
+                    }
+                }
+            }
     }
 
     fun setupListeners() {
