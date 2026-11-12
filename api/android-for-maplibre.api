@@ -172,6 +172,8 @@ public final class com.mapconductor.maplibre.MapLibreViewController extends com.
 }
 public final class com.mapconductor.maplibre.MapLibreViewControllerCameraKt {
   public static final com.mapconductor.core.map.MapCameraPosition readLogicalCameraPosition(com.mapconductor.maplibre.MapLibreViewController);
+  public static final double viewportHeightDp(com.mapconductor.maplibre.MapLibreViewController);
+  public static final com.mapconductor.core.map.MapCameraPosition toNativeCamera(com.mapconductor.maplibre.MapLibreViewController, com.mapconductor.core.map.MapCameraPosition);
   public static final float density(com.mapconductor.maplibre.MapLibreViewController);
   public static final com.mapconductor.core.map.MapCameraPosition getMapCameraPosition(com.mapconductor.maplibre.MapLibreViewController, com.mapconductor.core.map.MapCameraPositionInterface);
   public static final void handleMoveCamera(com.mapconductor.maplibre.MapLibreViewController, com.mapconductor.core.map.MapCameraPosition);

@@ -12,6 +12,7 @@ import com.mapconductor.core.OnMapLoadedHandler
 import com.mapconductor.core.circle.CircleManager
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPositionInterface
+import com.mapconductor.core.map.MapPaddings
 import com.mapconductor.core.map.MapViewStyle
 import com.mapconductor.core.map.MutableMapServiceRegistry
 import com.mapconductor.core.map.StyleMutationStore
@@ -90,7 +91,8 @@ fun MapLibreMapView(
         modifier = modifier,
         viewProvider = {
             val cameraPosition =
-                state.cameraPosition.toCameraPosition(context.resources.displayMetrics.density)
+                // パディングは MapLibre に渡さない。接続時の moveCamera が中心のずらしで適用する。
+                state.cameraPosition.copy(paddings = MapPaddings.Zeros).toCameraPosition(context.resources.displayMetrics.density)
             val mapInitOptions =
                 MapLibreMapOptions
                     .createFromAttributes(context)
