@@ -10,19 +10,27 @@ public final class com.mapconductor.maplibre.GeoRectBoundsKt {
   public static final com.mapconductor.core.features.GeoRectBounds toGeoRectBounds(org.maplibre.android.geometry.LatLngBounds);
 }
 public final class com.mapconductor.maplibre.MapCameraPositionKt {
+  public static final double MAPLIBRE_VERTICAL_FOV;
+  public static final double[] toMaplibrePadding(com.mapconductor.core.map.MapPaddingsInterface, float);
+  public static final com.mapconductor.core.map.MapPaddings toMapPaddings(double[], float);
   public static final org.maplibre.android.camera.CameraPosition toCameraPosition(com.mapconductor.core.map.MapCameraPosition);
+  public static final org.maplibre.android.camera.CameraPosition toCameraPosition(com.mapconductor.core.map.MapCameraPosition, java.lang.Float);
   public static final com.mapconductor.core.map.MapCameraPosition from(com.mapconductor.core.map.MapCameraPosition$Companion, com.mapconductor.core.map.MapCameraPositionInterface);
   public static final com.mapconductor.core.map.MapCameraPosition toMapCameraPosition(org.maplibre.android.camera.CameraPosition);
   public static final com.mapconductor.core.map.MapCameraPosition toMapCameraPosition(org.maplibre.android.camera.CameraPosition, java.lang.Double);
+  public static final com.mapconductor.core.map.MapCameraPosition toMapCameraPosition(org.maplibre.android.camera.CameraPosition, java.lang.Double, java.lang.Float);
 }
 public final class com.mapconductor.maplibre.MapLibreCameraStateSnapshot {
-  public com.mapconductor.maplibre.MapLibreCameraStateSnapshot(org.maplibre.android.camera.CameraPosition, java.lang.Double);
+  public com.mapconductor.maplibre.MapLibreCameraStateSnapshot(org.maplibre.android.camera.CameraPosition, java.lang.Double, java.lang.Float);
+  public com.mapconductor.maplibre.MapLibreCameraStateSnapshot(org.maplibre.android.camera.CameraPosition, java.lang.Double, java.lang.Float, int, kotlin.jvm.internal.DefaultConstructorMarker);
   public final org.maplibre.android.camera.CameraPosition getCameraPosition();
   public final java.lang.Double getLogicalTiltHint();
+  public final java.lang.Float getDensity();
   public final com.mapconductor.core.map.MapCameraPosition toMapCameraPosition();
   public final org.maplibre.android.camera.CameraPosition component1();
   public final java.lang.Double component2();
-  public final com.mapconductor.maplibre.MapLibreCameraStateSnapshot copy(org.maplibre.android.camera.CameraPosition, java.lang.Double);
+  public final java.lang.Float component3();
+  public final com.mapconductor.maplibre.MapLibreCameraStateSnapshot copy(org.maplibre.android.camera.CameraPosition, java.lang.Double, java.lang.Float);
   public java.lang.String toString();
   public int hashCode();
   public boolean equals(java.lang.Object);
@@ -164,6 +172,7 @@ public final class com.mapconductor.maplibre.MapLibreViewController extends com.
 }
 public final class com.mapconductor.maplibre.MapLibreViewControllerCameraKt {
   public static final com.mapconductor.core.map.MapCameraPosition readLogicalCameraPosition(com.mapconductor.maplibre.MapLibreViewController);
+  public static final float density(com.mapconductor.maplibre.MapLibreViewController);
   public static final com.mapconductor.core.map.MapCameraPosition getMapCameraPosition(com.mapconductor.maplibre.MapLibreViewController, com.mapconductor.core.map.MapCameraPositionInterface);
   public static final void handleMoveCamera(com.mapconductor.maplibre.MapLibreViewController, com.mapconductor.core.map.MapCameraPosition);
   public static final void handleAnimateCamera(com.mapconductor.maplibre.MapLibreViewController, com.mapconductor.core.map.MapCameraPosition, long);

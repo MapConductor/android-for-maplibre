@@ -20,7 +20,10 @@ internal fun MapLibreViewController.readLogicalCameraPosition(): MapCameraPositi
     MapLibreCameraStateSnapshot(
         cameraPosition = holder.map.cameraPosition,
         logicalTiltHint = lastLogicalCameraPosition?.tilt,
+        density = density(),
     ).toMapCameraPosition()
+
+internal fun MapLibreViewController.density(): Float = holder.mapView.resources.displayMetrics.density
 
 internal fun MapLibreViewController.getMapCameraPosition(camera: MapCameraPositionInterface): MapCameraPosition? {
     // 4 隅の逆投影は全プロバイダ共通なのでコアの buildVisibleRegion を使う。
@@ -31,7 +34,7 @@ internal fun MapLibreViewController.getMapCameraPosition(camera: MapCameraPositi
 internal fun MapLibreViewController.handleMoveCamera(position: MapCameraPosition) {
     lastLogicalCameraPosition = position
     mainCoroutine.launch {
-        val cameraPos = position.toCameraPosition()
+        val cameraPos = position.toCameraPosition(density())
         val cameraUpdate =
             CameraUpdateFactory
                 .newCameraPosition(cameraPos)
@@ -46,7 +49,7 @@ internal fun MapLibreViewController.handleAnimateCamera(
 ) {
     lastLogicalCameraPosition = position
     mainCoroutine.launch {
-        val cameraPos = position.toCameraPosition()
+        val cameraPos = position.toCameraPosition(density())
         val cameraUpdate =
             CameraUpdateFactory
                 .newCameraPosition(cameraPos)

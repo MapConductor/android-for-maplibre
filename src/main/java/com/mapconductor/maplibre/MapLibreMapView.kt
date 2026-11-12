@@ -90,7 +90,7 @@ fun MapLibreMapView(
         modifier = modifier,
         viewProvider = {
             val cameraPosition =
-                state.cameraPosition.toCameraPosition()
+                state.cameraPosition.toCameraPosition(context.resources.displayMetrics.density)
             val mapInitOptions =
                 MapLibreMapOptions
                     .createFromAttributes(context)
