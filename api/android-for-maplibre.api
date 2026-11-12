@@ -325,6 +325,7 @@ public final class com.mapconductor.maplibre.marker.MapLibreMarkerOverlayRendere
   public java.lang.Object onRemove(java.util.List<? extends com.mapconductor.core.marker.MarkerEntityInterface<org.maplibre.geojson.Feature>>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public final void drawDragLayer();
   public final void redraw();
+  protected java.lang.Object applyDrawOrder(java.util.List<? extends com.mapconductor.core.marker.MarkerEntityInterface<org.maplibre.geojson.Feature>>, kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public java.lang.Object onPostProcess(kotlin.coroutines.Continuation<? super kotlin.Unit>);
   public java.lang.Object onChange(java.util.List<? extends com.mapconductor.core.marker.MarkerOverlayRendererInterface$ChangeParamsInterface<org.maplibre.geojson.Feature>>, kotlin.coroutines.Continuation<? super java.util.List<org.maplibre.geojson.Feature>>);
   public void onDragSelectionChanged(com.mapconductor.core.marker.MarkerEntityInterface<org.maplibre.geojson.Feature>, com.mapconductor.core.marker.MarkerEntityInterface<org.maplibre.geojson.Feature>);
