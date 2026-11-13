@@ -8,6 +8,7 @@ import com.mapconductor.compose.map.BaseMapViewSaver
 import com.mapconductor.core.map.MapCameraPosition
 import com.mapconductor.core.map.MapCameraPositionInterface
 import com.mapconductor.core.map.MapViewState
+import com.mapconductor.core.map.MapViewStateBundle
 import com.mapconductor.core.map.MapViewStateInterface
 import java.util.UUID
 import android.os.Bundle
@@ -20,7 +21,10 @@ class MapLibreViewState(
     cameraPosition: MapCameraPosition = MapCameraPosition.Default,
 ) : MapViewState<MapLibreMapDesignTypeInterface>(cameraPosition),
     MapLibreViewStateInterface {
-    private var controller: MapLibreViewControllerInterface? = null
+    // Read through the base so that letting go of the controller there (MapViewBase
+    // does it when the map is torn down) leaves nothing behind here.
+    private val controller: MapLibreViewControllerInterface?
+        get() = attachedMapController as? MapLibreViewControllerInterface
     private var _mapDesignType: MapLibreMapDesignTypeInterface = mapDesignType
 
     override var mapDesignType: MapLibreMapDesignTypeInterface
@@ -31,7 +35,6 @@ class MapLibreViewState(
         get() = _mapDesignType
 
     internal fun setController(controller: MapLibreViewControllerInterface) {
-        this.controller = controller
         attachController(controller)
     }
 
@@ -53,7 +56,10 @@ class MapLibreMapViewSaver : BaseMapViewSaver<MapLibreViewState>() {
         state: MapLibreViewState,
         bundle: Bundle,
     ) {
-        bundle.putString("styleJsonURL", state.mapDesignType.styleJsonURL)
+        val design = state.mapDesignType
+        bundle.putString("id", design.id)
+        bundle.putString("styleJsonURL", design.styleJsonURL)
+        MapViewStateBundle.putAttributionRules(bundle, design.attributionRules)
     }
 
     override fun createState(
@@ -71,6 +77,7 @@ class MapLibreMapViewSaver : BaseMapViewSaver<MapLibreViewState>() {
                     styleJsonURL =
                         mapDesignBundle?.getString("styleJsonURL")
                             ?: MapLibreDesign.OsmBright.styleJsonURL,
+                    attributionRules = MapViewStateBundle.getAttributionRules(mapDesignBundle),
                 ),
             cameraPosition = cameraPosition,
         )

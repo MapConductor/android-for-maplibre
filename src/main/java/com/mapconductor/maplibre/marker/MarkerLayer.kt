@@ -19,20 +19,27 @@ open class MarkerLayer(
     open val sourceId: String,
     open val layerId: String,
 ) {
-    val layer =
-        SymbolLayer(layerId, sourceId).apply {
-            setProperties(
-                iconImage(get(MapLibreMarkerOverlayRenderer.Prop.ICON_ID)),
-                // iconSize(get(MapLibreMarkerOverlayRenderer.Prop.SCALE)),
-                iconAllowOverlap(true),
-                iconIgnorePlacement(true),
-                PropertyFactory.symbolSortKey(get(MapLibreMarkerOverlayRenderer.Prop.Z_INDEX)),
-                iconAnchor(MapLibreMarkerOverlayRenderer.IconAnchor.TOP_LEFT),
-                iconTranslateAnchor(MapLibreMarkerOverlayRenderer.IconTranslateAnchor.MAP),
-                // Each feature always carries icon-offset in properties; use it directly
-                iconOffset(get(MapLibreMarkerOverlayRenderer.Prop.ICON_ANCHOR)),
-            )
-        }
+    // A fresh native layer on every read. MapLibre releases a Layer's core
+    // object into the style it is added to, and the Java object can never be
+    // added again ("Cannot add layer twice") -- so the one built for the
+    // first style was silently refused by every style loaded after it, and
+    // a design change lost the overlays. Only `setupStyle` reads this, once
+    // per style load.
+    val layer: SymbolLayer
+        get() =
+            SymbolLayer(layerId, sourceId).apply {
+                setProperties(
+                    iconImage(get(MapLibreMarkerOverlayRenderer.Prop.ICON_ID)),
+                    // iconSize(get(MapLibreMarkerOverlayRenderer.Prop.SCALE)),
+                    iconAllowOverlap(true),
+                    iconIgnorePlacement(true),
+                    PropertyFactory.symbolSortKey(get(MapLibreMarkerOverlayRenderer.Prop.Z_INDEX)),
+                    iconAnchor(MapLibreMarkerOverlayRenderer.IconAnchor.TOP_LEFT),
+                    iconTranslateAnchor(MapLibreMarkerOverlayRenderer.IconTranslateAnchor.MAP),
+                    // Each feature always carries icon-offset in properties; use it directly
+                    iconOffset(get(MapLibreMarkerOverlayRenderer.Prop.ICON_ANCHOR)),
+                )
+            }
 
     val source: GeoJsonSource =
         GeoJsonSource(

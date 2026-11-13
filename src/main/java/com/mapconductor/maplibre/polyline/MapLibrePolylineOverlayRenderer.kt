@@ -67,11 +67,11 @@ class MapLibrePolylineOverlayRenderer(
     private fun getAllPolylineEntities(): List<PolylineEntityInterface<MapLibreActualPolyline>> {
         // This would need access to the polyline manager
         // For now, we'll implement a simple workaround
-        return polylineManager.allEntities()
+        return polylineManager.allEntities().filter { (it.polyline as MapLibreActualPolyline?) != null }
     }
 
     fun redraw() {
-        val entities = polylineManager.allEntities()
+        val entities = polylineManager.allEntities().filter { (it.polyline as MapLibreActualPolyline?) != null }
         holder.map.style?.let {
             coroutine.launch {
                 layer.draw(entities, it)

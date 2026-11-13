@@ -12,7 +12,14 @@ import com.mapconductor.core.OnMapLoadedHandler
 import com.mapconductor.core.circle.CircleManager
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPositionInterface
+import com.mapconductor.core.map.MapPaddings
+import com.mapconductor.core.map.MapViewStyle
 import com.mapconductor.core.map.MutableMapServiceRegistry
+import com.mapconductor.core.map.StyleMutationStore
+import com.mapconductor.core.map.VectorStyleAsDesign
+import com.mapconductor.core.map.VectorStyleMutationSupportKey
+import com.mapconductor.core.map.VectorStyleSupportKey
+import com.mapconductor.core.map.applyStyleMutations
 import com.mapconductor.core.marker.MarkerEventControllerInterface
 import com.mapconductor.core.marker.MarkerManager
 import com.mapconductor.core.marker.MarkerOverlayRendererInterface
@@ -32,7 +39,8 @@ import com.mapconductor.maplibre.marker.MapLibreMarkerController
 import com.mapconductor.maplibre.marker.MapLibreMarkerOverlayRenderer
 import com.mapconductor.maplibre.marker.MarkerDragLayer
 import com.mapconductor.maplibre.marker.MarkerLayer
-import com.mapconductor.maplibre.polygon.MapLibrePolygonConductor
+import com.mapconductor.maplibre.polygon.MapLibrePolygonCompositeRenderer
+import com.mapconductor.maplibre.polygon.MapLibrePolygonController
 import com.mapconductor.maplibre.polygon.MapLibrePolygonLayer
 import com.mapconductor.maplibre.polygon.MapLibrePolygonOverlayRenderer
 import com.mapconductor.maplibre.polyline.MapLibrePolylineController
@@ -61,6 +69,15 @@ fun MapLibreMapView(
     onCameraMoveStart: OnCameraMoveHandler? = null,
     onCameraMove: OnCameraMoveHandler? = null,
     onCameraMoveEnd: OnCameraMoveHandler? = null,
+    /**
+     * How the map looks, when the app states it rather than naming a design.
+     *
+     * A vector style *is* the basemap. `com.mapconductor:vectorstyle` builds
+     * one; what happens underneath depends on this backend and the app does
+     * not have to know.
+     */
+    style: MapViewStyle? = null,
+    onStyleDiagnostics: ((List<String>) -> Unit)? = null,
     content: (@Composable MapLibreMapViewScope.() -> Unit)? = null,
 ) {
     val context = LocalContext.current
@@ -74,7 +91,8 @@ fun MapLibreMapView(
         modifier = modifier,
         viewProvider = {
             val cameraPosition =
-                state.cameraPosition.toCameraPosition()
+                // パディングは MapLibre に渡さない。接続時の moveCamera が中心のずらしで適用する。
+                state.cameraPosition.copy(paddings = MapPaddings.Zeros).toCameraPosition(context.resources.displayMetrics.density)
             val mapInitOptions =
                 MapLibreMapOptions
                     .createFromAttributes(context)
@@ -127,6 +145,49 @@ fun MapLibreMapView(
                 mapController.setMapLongClickListener(onMapLongClick)
                 cameraRestriction?.let { mapController.setCameraRestriction(it) }
                 state.setController(mapController)
+                // MapLibre draws vector styles natively: a layer with a style
+                // to show hands it over instead of rasterising it. Registered
+                // here and not in `createMapLibreViewController` because it
+                // acts on the *state's* design, which non-Compose hosts do
+                // not have.
+                state.serviceRegistry.put(
+                    VectorStyleSupportKey,
+                    VectorStyleAsDesign(
+                        state,
+                        // MapLibre's design is a plain style document, so
+                        // "adjust whatever is showing" has something to
+                        // fetch here. Mapbox's is `mapbox://…` and
+                        // MapTiler's is a cloud id, so those answer null for
+                        // their built-ins and the app is told rather than
+                        // shown an unstyled map.
+                        urlOf = { design -> design.styleJsonURL.takeIf { it.startsWith("http") } },
+                    ) { url, rules ->
+                        MapLibreDesign(id = "vector-style:$url", styleJsonURL = url, attributionRules = rules)
+                    },
+                )
+                // MapLibre can also be told to change a loaded style in
+                // place, so adjusting one need not hand it a new document --
+                // which would drop its tiles and rebuild every overlay the
+                // app added. `VectorStyle` looks this up and takes the cheap
+                // road when it is here.
+                //
+                // The style is read through a lambda rather than captured:
+                // every design change replaces it, and a target holding the
+                // old one would patch a style the map has already dropped.
+                val mutations =
+                    StyleMutationStore { list ->
+                        applyStyleMutations(
+                            MapLibreStyleMutationTarget(
+                                style = { mapController.loadedStyle() },
+                                ready = { mapController.isShowingRequestedStyle() },
+                            ),
+                            list,
+                        )
+                    }
+                state.serviceRegistry.put(VectorStyleMutationSupportKey, mutations)
+                // Whatever was applied is lost the moment the map loads a
+                // style again; this is where it goes back on.
+                mapController.styleLoadedListener = { mutations.onStyleLoaded() }
                 // Post an initial camera update after layout to compute visibleRegion correctly
                 holder.mapView.post { mapController.sendInitialCameraUpdate() }
             }
@@ -142,6 +203,13 @@ fun MapLibreMapView(
         // Pass content if it needs to be rendered within the overlay providers in MapViewBase,
         // or handle it here if it's specific to MapLibreMapView structure before calling MapViewBase.
         // For now, assuming content relates to overlay definitions.
+        style = style,
+        onStyleDiagnostics = onStyleDiagnostics,
+        // Never started (onStart is not called), so it is not stopped either --
+        // MapView.onStop() would deactivate the shared FileSource the next map
+        // still uses. Destroying it ends the render thread, whose camera
+        // listeners otherwise keep the controller and every overlay alive.
+        onDestroyMapView = { mapView -> mapView.onDestroy() },
         content = content, // This might need adjustment based on how overlays are handled
     )
 }
@@ -254,7 +322,7 @@ fun getPolylineController(holder: MapLibreMapViewHolderInterface): MapLibrePolyl
     return controller
 }
 
-fun getPolygonController(holder: MapLibreMapViewHolderInterface): MapLibrePolygonConductor {
+fun getPolygonController(holder: MapLibreMapViewHolderInterface): MapLibrePolygonController {
     val polylineLayer =
         MapLibrePolylineLayer(
             sourceId = "polygon-outline-source",
@@ -281,9 +349,12 @@ fun getPolygonController(holder: MapLibreMapViewHolderInterface): MapLibrePolygo
             holder = holder,
         )
 
-    return MapLibrePolygonConductor(
-        polygonOverlay = polygonOverlayRenderer,
-        polylineOverlay = polylineOverlayRenderer,
+    return MapLibrePolygonController(
+        renderer =
+            MapLibrePolygonCompositeRenderer(
+                fill = polygonOverlayRenderer,
+                outline = polylineOverlayRenderer,
+            ),
     )
 }
 

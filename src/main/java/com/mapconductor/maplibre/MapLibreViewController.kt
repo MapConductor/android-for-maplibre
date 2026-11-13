@@ -1,5 +1,8 @@
 package com.mapconductor.maplibre
 
+import com.mapconductor.core.circle.CIRCLE_TILE_LAYER_ID
+import com.mapconductor.core.circle.CircleTiler
+import com.mapconductor.core.circle.circleTileRasterLayerState
 import com.mapconductor.core.circle.OnCircleEventHandler
 import com.mapconductor.core.controller.BaseMapViewController
 import com.mapconductor.core.features.GeoPointInterface
@@ -7,6 +10,8 @@ import com.mapconductor.core.features.GeoRectBounds
 import com.mapconductor.core.groundimage.OnGroundImageEventHandler
 import com.mapconductor.core.map.CameraRestriction
 import com.mapconductor.core.map.MapCameraPosition
+import com.mapconductor.core.map.MapPaddings
+import com.mapconductor.core.map.MapPaddingsInterface
 import com.mapconductor.core.map.MapUISettings
 import com.mapconductor.core.marker.DefaultMarkerEventController
 import com.mapconductor.core.marker.MarkerAnimationOverlayHost
@@ -17,15 +22,21 @@ import com.mapconductor.core.marker.OnMarkerEventHandler
 import com.mapconductor.core.marker.StrategyMarkerController
 import com.mapconductor.core.marker.dispatchGeoMarkerClick
 import com.mapconductor.core.polygon.OnPolygonEventHandler
+import com.mapconductor.core.polygon.POLYGON_TILE_LAYER_ID
 import com.mapconductor.core.polygon.PolygonState
+import com.mapconductor.core.polygon.PolygonTiler
+import com.mapconductor.core.polygon.polygonTileRasterLayerState
 import com.mapconductor.core.polyline.OnPolylineEventHandler
+import com.mapconductor.core.polyline.POLYLINE_TILE_LAYER_ID
+import com.mapconductor.core.polyline.PolylineTiler
+import com.mapconductor.core.polyline.polylineTileRasterLayerState
 import com.mapconductor.maplibre.circle.MapLibreCircleController
 import com.mapconductor.maplibre.groundimage.MapLibreGroundImageController
 import com.mapconductor.maplibre.marker.MapLibreMarkerController
 import com.mapconductor.maplibre.marker.MapLibreMarkerOverlayRenderer
 import com.mapconductor.maplibre.marker.MarkerDragLayer
 import com.mapconductor.maplibre.marker.MarkerLayer
-import com.mapconductor.maplibre.polygon.MapLibrePolygonConductor
+import com.mapconductor.maplibre.polygon.MapLibrePolygonController
 import com.mapconductor.maplibre.polyline.MapLibrePolylineController
 import com.mapconductor.maplibre.raster.MapLibreRasterLayerController
 import org.maplibre.android.geometry.LatLng
@@ -46,7 +57,7 @@ class MapLibreViewController(
     override val holder: MapLibreMapViewHolderInterface,
     internal val markerController: MapLibreMarkerController,
     internal val polylineController: MapLibrePolylineController,
-    internal val polygonController: MapLibrePolygonConductor,
+    internal val polygonController: MapLibrePolygonController,
     internal val groundImageController: MapLibreGroundImageController,
     internal val circleController: MapLibreCircleController,
     internal val rasterLayerController: MapLibreRasterLayerController,
@@ -74,6 +85,9 @@ class MapLibreViewController(
     internal var markerAnimateEndListener: OnMarkerEventHandler? = null
 
     internal var lastLogicalCameraPosition: MapCameraPosition? = null
+
+    /** アプリが指定したパディング（dp）。MapLibre には渡さず、中心のずらしで再現する。 */
+    internal var cameraPaddings: MapPaddingsInterface = MapPaddings.Zeros
 
     init {
         // Style should already be loaded by holderProvider
@@ -104,6 +118,43 @@ class MapLibreViewController(
                 markerTileLayers.forEach { entity -> rasterLayerController.removeById(entity.state.id) }
             }
         }
+
+        // Many polygons are drawn as raster tiles, shown through the same RasterLayer
+        // controller as the marker tiles (upsert / removeById, never the app's layers).
+        polygonController.tiler =
+            PolygonTiler().apply {
+                onTemplate = { template, tileSize ->
+                    if (template != null) {
+                        rasterLayerController.upsert(polygonTileRasterLayerState(template, tileSize))
+                    } else {
+                        rasterLayerController.removeById(POLYGON_TILE_LAYER_ID)
+                    }
+                }
+            }
+
+        // Many circles too: the same raster layer path, in the circle band.
+        circleController.tiler =
+            CircleTiler().apply {
+                onTemplate = { template, tileSize ->
+                    if (template != null) {
+                        rasterLayerController.upsert(circleTileRasterLayerState(template, tileSize))
+                    } else {
+                        rasterLayerController.removeById(CIRCLE_TILE_LAYER_ID)
+                    }
+                }
+            }
+
+        // Many polylines too: the same raster layer path, in the polyline band.
+        polylineController.tiler =
+            PolylineTiler().apply {
+                onTemplate = { template, tileSize ->
+                    if (template != null) {
+                        rasterLayerController.upsert(polylineTileRasterLayerState(template, tileSize))
+                    } else {
+                        rasterLayerController.removeById(POLYLINE_TILE_LAYER_ID)
+                    }
+                }
+            }
     }
 
     fun setupListeners() {
@@ -127,6 +178,8 @@ class MapLibreViewController(
         groundImageController.clear()
         circleController.clear()
         rasterLayerController.clear()
+        // 拡張モジュール（クラスタリングなど）が登録した Strategy のマーカーも消す。
+        clearStrategyMarkerControllers()
     }
 
     override fun moveCamera(position: MapCameraPosition) = handleMoveCamera(position)
@@ -155,12 +208,51 @@ class MapLibreViewController(
     // Provide access to the style instance
     fun getStyleInstance(): Style? = styleInstance
 
+    /**
+     * The style, only while it is the one the map draws. A style that a
+     * newer one has replaced or is replacing throws on every call
+     * ("Calling getLayer when a newer style is loading"); overlays added
+     * then are re-added by `setupStyle` once the new style has loaded.
+     */
+    internal fun loadedStyle(): Style? = styleInstance?.takeIf { it.isFullyLoaded }
+
+    /** The document [loadedStyle] was loaded from, and the one asked for. */
+    private var loadedStyleUrl: String? = null
+    private var requestedStyleUrl: String? = null
+
+    /**
+     * Whether the style on screen is the document the map was last asked
+     * for.
+     *
+     * What [MapLibreStyleMutationTarget] answers `isReady` with, and not the
+     * same question as "is a style loaded". A vector style hands over a new
+     * document and then applies the deltas compiled for it; between those
+     * two the map still has the document being replaced, whose layers have
+     * other names, so every delta came back as a property this map
+     * "cannot set by name" -- five hundred of them, while the map itself
+     * looked right because the whole set goes on again at
+     * [styleLoadedListener].
+     */
+    internal fun isShowingRequestedStyle(): Boolean =
+        loadedStyle() != null && loadedStyleUrl == requestedStyleUrl
+
     private var mapDesignTypeChangeListener: MapLibreDesignTypeChangeHandler? = null
 
+    /**
+     * Called once the map has a style up and the overlays are back on it.
+     *
+     * How a vector style adjustment survives a design change: everything it
+     * set is lost with the old style, and this is the moment the new one is
+     * known to be complete.
+     */
+    internal var styleLoadedListener: (() -> Unit)? = null
+
     override fun setMapDesignType(value: MapLibreMapDesignTypeInterface) {
+        requestedStyleUrl = value.styleJsonURL
         mainCoroutine.launch {
             holder.map.setStyle(value.styleJsonURL) { newStyle ->
                 Log.d("MapLibre", "Style changed to ${value.styleJsonURL}")
+                loadedStyleUrl = value.styleJsonURL
                 setupStyle(newStyle)
             }
         }
@@ -192,12 +284,12 @@ class MapLibreViewController(
 
     override suspend fun compositionPolygons(data: List<PolygonState>) {
         polygonController.add(data)
-        getStyleInstance()?.let { ensurePolygonZLayers(it) }
+        loadedStyle()?.let { ensurePolygonZLayers(it) }
     }
 
     override suspend fun updatePolygon(state: PolygonState) {
         polygonController.update(state)
-        getStyleInstance()?.let { ensurePolygonZLayers(it) }
+        loadedStyle()?.let { ensurePolygonZLayers(it) }
     }
 
     @Deprecated("Use MarkerState.onDragStart instead.")
@@ -319,22 +411,17 @@ class MapLibreViewController(
         controller.setAnimateEndListener(markerAnimateEndListener)
 
         val renderer = controller.renderer as MapLibreMarkerOverlayRenderer
-        styleInstance?.let { style ->
+        loadedStyle()?.let { style ->
             renderer.ensureDefaultIcon(style)
             ensureGeoJsonSource(style, renderer.markerLayer.sourceId)
-            addLayerAboveSafely(
-                style = style,
-                layer = renderer.markerLayer.layer,
-                layerId = renderer.markerLayer.layerId,
-                aboveId = polylineController.renderer.layer.layerId,
+            MapLibreOverlayStacking.add(
+                holder.map,
+                style,
+                renderer.markerLayer.layer,
+                MapLibreOverlayStacking.key(com.mapconductor.core.controller.OverlayKind.Marker),
             )
             ensureGeoJsonSource(style, renderer.dragLayer.sourceId)
-            addLayerAboveSafely(
-                style = style,
-                layer = renderer.dragLayer.layer,
-                layerId = renderer.dragLayer.layerId,
-                aboveId = renderer.markerLayer.layerId,
-            )
+            MapLibreOverlayStacking.add(holder.map, style, renderer.dragLayer.layer, MapLibreOverlayStacking.MARKER_DRAG)
             renderer.redraw()
             renderer.drawDragLayer()
         }

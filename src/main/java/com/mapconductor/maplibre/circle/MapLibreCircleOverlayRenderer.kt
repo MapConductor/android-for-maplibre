@@ -42,7 +42,7 @@ class MapLibreCircleOverlayRenderer(
 
     /** Reapply the current composition after a MapLibre style is created or replaced. */
     fun redraw() {
-        val circles = circleManager.allEntities()
+        val circles = circleManager.nativeEntities().filter { (it.circle as MapLibreActualCircle?) != null }
         holder.map.style?.let { style ->
             coroutine.launch { layer.draw(circles, style) }
         }
